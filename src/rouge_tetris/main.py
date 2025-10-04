@@ -12,6 +12,7 @@ def run():
     game = Tetris(screen)
     
     while True:
+        clock.tick(60)
         # Handle events 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
