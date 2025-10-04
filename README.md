@@ -12,13 +12,10 @@ Rouge-like implementation of the famous "Tetris" game
 - ```make install``` install only
 - ```make uninstall``` uninstall project
 
-## Manual Installation
-- TO DO
-
 ## Running
 - After installation, all is needed is to use the terminal to run the game using the
 ```sh
-  rouge-tetris
+  rouge_tetris
 ```
 
 ## External credits
