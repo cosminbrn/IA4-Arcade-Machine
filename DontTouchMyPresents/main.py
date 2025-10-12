@@ -1,12 +1,32 @@
 import random
 import sys
 import pygame
+import math
 pygame.init()
 
 screen_width, screen_height = 960, 720
 white = (255, 255, 255)
 black = (0, 0, 0)
 lightblue = (113, 207, 247)
+
+class ScoreBoard:
+    def __init__ (self, x, y):
+        self.x = x
+        self.y = y
+        self.width = screen_width * 0.2
+        self.height = screen_height * 0.1
+        self.score = 0
+        self.font = pygame.font.Font(None, 56)
+
+    def add_score(self):
+        self.score += 1
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, white, (self.x, self.y, self.width, self.height))
+        pygame.draw.rect(screen, black, (self.x, self.y, self.width, self.height), 4)
+        score_text = self.font.render(f"Score: {self.score}", True, black)
+        screen.blit(score_text, (self.x + (self.width - score_text.get_width()) / 2, 
+                                 self.y + (self.height - score_text.get_height()) / 2))
 
 class Flake:
     def __init__ (self, screen_width, screen_height):
@@ -29,6 +49,47 @@ class Flake:
     def draw(self, screen):
         pygame.draw.circle(screen, white, (int(self.x), int(self.y)), self.size)
 
+class Title:
+    def __init__ (self, x, y, image):
+        self.start_x = x
+        self.start_y = y
+        self.x = x
+        self.y = y
+        self.image = image
+        self.amplitude = 2
+        self.frequency = 0.05
+        self.time = 0
+
+    def update(self):
+        self.time += self.frequency
+        self.y = self.start_y + self.amplitude * math.sin(self.time)
+        self.x = self.start_x + self.amplitude * math.cos(self.time)
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+
+class PresentMenu:
+    def __init__ (self, x, y, image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.direction = 1
+        self.speed = 0.3
+        self.max_offset = screen_width * 0.01
+        self.start_x = x
+        self.start_y = y
+        self.time = 0
+        self.amplitude = 3
+        self.frequency = 0.05
+
+    def update(self):
+        self.time += self.frequency
+        self.y = self.start_y + self.amplitude * math.sin(self.time)
+        self.x = self.start_x + self.amplitude * math.cos(self.time)
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+
 def background(screen, flakes):
     for flake in flakes:
         flake.update()
@@ -44,6 +105,17 @@ def load_present_image():
     present_image = pygame.transform.scale(present_image, (int(screen_width * 0.16), int(screen_height * 0.18)))
     return present_image
 
+def load_hand_left_image():
+    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/handleft.png")
+    hand_left_image = pygame.transform.scale(hand_left_image, (int(screen_width * 0.1), int(screen_height * 0.1)))
+    return hand_left_image
+
+def load_hand_right_image():
+    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/handleft.png")
+    hand_right_image = pygame.transform.flip(hand_left_image, True, False)
+    hand_right_image = pygame.transform.scale(hand_right_image, (int(screen_width * 0.1), int(screen_height * 0.1)))
+    return hand_right_image
+
 def main():
     flakes = [Flake(screen_width, screen_height) for _ in range(250)]
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -51,13 +123,28 @@ def main():
     clock = pygame.time.Clock()
     gamestate = "menu"
 
+    scoreboard_x = (screen_width - screen_width * 0.2) / 2
+    scoreboard_y = screen_height * 0.03
+    scoreboard = ScoreBoard(scoreboard_x, scoreboard_y)
+
     title_image = load_title_image()
     title_x = (screen_width - title_image.get_width()) / 2
     title_y = screen_height * 0.08
 
+    title = Title(title_x, title_y, title_image)
+
     present_image = load_present_image()
     present_x = (screen_width - present_image.get_width()) / 2
     present_y = screen_height * 0.4
+
+    present_menu = PresentMenu(present_x, present_y, present_image)
+
+    hand_left = load_hand_left_image()
+    hand_left_x = screen_width * 0.05
+    hand_left_y = screen_height * 0.7
+    hand_right = load_hand_right_image()
+    hand_right_x = screen_width * 0.85
+    hand_right_y = screen_height * 0.7
 
     start_button_width = screen_width * 0.33
     start_button_height = screen_height * 0.085
@@ -88,10 +175,19 @@ def main():
             pygame.draw.rect(screen, black, start_button, 4, border_radius = 12)
             screen.blit(title_image, (title_x, title_y))
             screen.blit(button_surface, (button_x, button_y))
-            screen.blit(present_image, (present_x, present_y))
+
+            screen.blit(hand_left, (hand_left_x, hand_left_y))
+            screen.blit(hand_right, (hand_right_x, hand_right_y))
+
+            title.update()
+            title.draw(screen)
+
+            present_menu.update()
+            present_menu.draw(screen)
             background(screen, flakes)
 
         elif gamestate == "game":
+            scoreboard.draw(screen)
             background(screen, flakes)
 
         pygame.display.flip()
