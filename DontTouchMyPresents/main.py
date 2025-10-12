@@ -7,7 +7,7 @@ pygame.init()
 screen_width, screen_height = 960, 720
 white = (255, 255, 255)
 black = (0, 0, 0)
-lightblue = (113, 207, 247)
+lightblue = (123, 194, 212)
 
 class ScoreBoard:
     def __init__ (self, x, y):
@@ -96,7 +96,7 @@ def background(screen, flakes):
         flake.draw(screen)
 
 def load_title_image():
-    title_image = pygame.image.load("DontTouchMyPresents/Assets/title.png")
+    title_image = pygame.image.load("DontTouchMyPresents/Assets/title4.png")
     title_image = pygame.transform.scale(title_image, (int(screen_width * 0.6), int(screen_height * 0.3)))
     return title_image
 
@@ -176,8 +176,8 @@ def main():
             screen.blit(title_image, (title_x, title_y))
             screen.blit(button_surface, (button_x, button_y))
 
-            screen.blit(hand_left, (hand_left_x, hand_left_y))
-            screen.blit(hand_right, (hand_right_x, hand_right_y))
+            #screen.blit(hand_left, (hand_left_x, hand_left_y))
+            #screen.blit(hand_right, (hand_right_x, hand_right_y))
 
             title.update()
             title.draw(screen)
