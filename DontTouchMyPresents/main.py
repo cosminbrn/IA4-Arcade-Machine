@@ -47,7 +47,7 @@ def load_present_image():
 def main():
     flakes = [Flake(screen_width, screen_height) for _ in range(250)]
     screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Don't Touch My Present")
+    pygame.display.set_caption("Don't Touch My Presents")
     clock = pygame.time.Clock()
     gamestate = "menu"
 
