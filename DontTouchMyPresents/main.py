@@ -106,14 +106,16 @@ def load_present_image():
     return present_image
 
 def load_hand_left_image():
-    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/handleft.png")
-    hand_left_image = pygame.transform.scale(hand_left_image, (int(screen_width * 0.1), int(screen_height * 0.1)))
+    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/redhand5.png")
+    hand_left_image = pygame.transform.scale(hand_left_image, (int(screen_width * 0.39), 
+                                                               int(screen_height * 0.65)))
     return hand_left_image
 
 def load_hand_right_image():
-    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/handleft.png")
+    hand_left_image = pygame.image.load("DontTouchMyPresents/Assets/redhand5.png")
     hand_right_image = pygame.transform.flip(hand_left_image, True, False)
-    hand_right_image = pygame.transform.scale(hand_right_image, (int(screen_width * 0.1), int(screen_height * 0.1)))
+    hand_right_image = pygame.transform.scale(hand_right_image, (int(screen_width * 0.39), 
+                                                                 int(screen_height * 0.65)))
     return hand_right_image
 
 def main():
@@ -129,7 +131,7 @@ def main():
 
     title_image = load_title_image()
     title_x = (screen_width - title_image.get_width()) / 2
-    title_y = screen_height * 0.08
+    title_y = screen_height * 0.05
 
     title = Title(title_x, title_y, title_image)
 
@@ -140,11 +142,11 @@ def main():
     present_menu = PresentMenu(present_x, present_y, present_image)
 
     hand_left = load_hand_left_image()
-    hand_left_x = screen_width * 0.05
-    hand_left_y = screen_height * 0.7
+    hand_left_x = (screen_width - hand_left.get_width()) * 0.39
+    hand_left_y = screen_height * 0.4
     hand_right = load_hand_right_image()
-    hand_right_x = screen_width * 0.85
-    hand_right_y = screen_height * 0.7
+    hand_right_x = (screen_width - hand_right.get_width()) * 0.61
+    hand_right_y = screen_height * 0.4
 
     start_button_width = screen_width * 0.33
     start_button_height = screen_height * 0.085
@@ -171,13 +173,13 @@ def main():
                 gamestate = "game"
 
         if gamestate == "menu":
+            screen.blit(title_image, (title_x, title_y))
+            screen.blit(hand_left, (hand_left_x, hand_left_y))
+            screen.blit(hand_right, (hand_right_x, hand_right_y))
+
             pygame.draw.rect(screen, white, start_button, border_radius = 12)
             pygame.draw.rect(screen, black, start_button, 4, border_radius = 12)
-            screen.blit(title_image, (title_x, title_y))
             screen.blit(button_surface, (button_x, button_y))
-
-            #screen.blit(hand_left, (hand_left_x, hand_left_y))
-            #screen.blit(hand_right, (hand_right_x, hand_right_y))
 
             title.update()
             title.draw(screen)
