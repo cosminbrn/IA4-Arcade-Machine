@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(
-    name="rouge_tetris",
+    name="interface",
     version="0.1",
     packages = find_packages(),
     package_dir={"": "."},
@@ -9,7 +9,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'rouge_tetris = rouge_tetris.main:run'
+            'interface = interface.main:run'
         ]
     }
 )

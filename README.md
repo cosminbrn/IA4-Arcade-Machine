@@ -1,5 +1,5 @@
 # IA4-Tetris-Project
-Rouge-like implementation of the famous "Tetris" game
+3 in 1 game macnine
 
 ## Prerequisites
 - python ^3.10
@@ -15,7 +15,7 @@ Rouge-like implementation of the famous "Tetris" game
 ## Running
 - After installation, all is needed is to use the terminal to run the game using the
 ```sh
-  rouge_tetris
+  interface
 ```
 
 ## External credits
