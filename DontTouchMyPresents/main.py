@@ -137,16 +137,16 @@ def main():
 
     present_image = load_present_image()
     present_x = (screen_width - present_image.get_width()) / 2
-    present_y = screen_height * 0.4
+    present_y = screen_height * 0.45
 
     present_menu = PresentMenu(present_x, present_y, present_image)
 
     hand_left = load_hand_left_image()
     hand_left_x = (screen_width - hand_left.get_width()) * 0.39
-    hand_left_y = screen_height * 0.4
+    hand_left_y = screen_height * 0.45
     hand_right = load_hand_right_image()
     hand_right_x = (screen_width - hand_right.get_width()) * 0.61
-    hand_right_y = screen_height * 0.4
+    hand_right_y = screen_height * 0.45
 
     start_button_width = screen_width * 0.33
     start_button_height = screen_height * 0.085
