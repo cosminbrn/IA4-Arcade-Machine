@@ -14,17 +14,32 @@ class HandGame:
     def __init__(self, image, side):
         self.side = side
         self.image = image
-        self.speed = 3.2
+        self.speed = 3.5
         self.reset()
+        self.passed_present = False
+        self.active = True
+        self.last_reset_time = 0
+        self.delay_after_reset = 500
 
     def reset(self):
         self.y = - self.image.get_height()
         if self.side == "left":
-            self.x = screen_width * 0
+            self.x = 0
         else:
-            self.x = screen_width - self.image.get_width() - screen_width * 0
+            self.x = screen_width - self.image.get_width()
+        self.passed_present = False
+        self.active = False
+        self.last_reset_time = pygame.time.get_ticks()
 
     def update(self):
+        current_time = pygame.time.get_ticks()
+
+        if not self.active:
+            if current_time - self.last_reset_time >= self.delay_after_reset:
+                self.active = True
+            else:
+                return
+        
         if self.speed < 4.5:
             self.speed += 0.01
 
@@ -33,9 +48,9 @@ class HandGame:
             self.reset()
 
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        if self.active:
+            screen.blit(self.image, (self.x, self.y))
         
-
 class ScoreBoard:
     def __init__ (self, x, y):
         self.x = x
@@ -117,6 +132,20 @@ class PresentMenu:
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
 
+class PresentGame:
+    def __init__ (self, x, y, image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.width = image.get_width()
+        self.height = image.get_height()
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+
+    def get_rect(self):
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+
 def background(screen, flakes):
     for flake in flakes:
         flake.update()
@@ -148,14 +177,14 @@ def load_hand_right_image():
 def load_handleft_ingame():
     handleft_ingame = pygame.image.load("DontTouchMyPresents/Assets/handingame.png")
     handleft_ingame = pygame.transform.scale(handleft_ingame, (int(screen_width * 0.55), 
-                                                               int(screen_height * 0.5)))
+                                                               int(screen_height * 0.16)))
     return handleft_ingame
 
 def load_handright_ingame():
     handright_ingame = pygame.image.load("DontTouchMyPresents/Assets/handingame.png")
     handright_ingame = pygame.transform.flip(handright_ingame, True, False)
     handright_ingame = pygame.transform.scale(handright_ingame, (int(screen_width * 0.55), 
-                                                                 int(screen_height * 0.5)))
+                                                                 int(screen_height * 0.16)))
     return handright_ingame
 
 def main():
@@ -164,6 +193,7 @@ def main():
     pygame.display.set_caption("Don't Touch My Presents")
     clock = pygame.time.Clock()
     gamestate = "menu"
+    final_score = 0
 
     scoreboard_x = (screen_width - screen_width * 0.2) / 2
     scoreboard_y = screen_height * 0.03
@@ -180,6 +210,7 @@ def main():
     present_y = screen_height * 0.45
 
     present_menu = PresentMenu(present_x, present_y, present_image)
+    present_game = PresentGame(present_x, present_y, present_image)
 
     hand_left = load_hand_left_image()
     hand_left_x = (screen_width - hand_left.get_width()) * 0.39
@@ -190,7 +221,7 @@ def main():
 
     handleft_ingame = load_handleft_ingame()
     handright_ingame = load_handright_ingame()
-    hand_delay = 2000
+    hand_delay = 1500
 
     hands = [
         HandGame(handleft_ingame, "left"),
@@ -212,6 +243,7 @@ def main():
     button_x = start_button_x + (start_button_width - button_surface.get_width()) / 2
     button_y = start_button_y + (start_button_height - button_surface.get_height()) / 2
 
+    dragging_present = False
     running = True
     while running:
         screen.fill(lightblue)
@@ -220,10 +252,35 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        if gamestate == "menu" and event.type == pygame.MOUSEBUTTONDOWN:
-            if start_button.collidepoint(event.pos):
-                gamestate = "game"
-                game_start_time = pygame.time.get_ticks()
+            if gamestate == "menu" and event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos):
+                    gamestate = "game"
+                    game_start_time = pygame.time.get_ticks()
+
+                    for i, hand in enumerate(hands):
+                        hand.reset()
+                        if i == 1:
+                            hand.y -= screen_height * 0.75
+
+                    scoreboard.score = 0
+
+            if gamestate == "game":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    present_rect = present_game.get_rect()
+                    mouse_x, mouse_y = event.pos
+                    if present_rect.collidepoint(mouse_x, mouse_y):
+                        dragging_present = True
+                        # offset to maintain cursor position on the present
+                        mouse_offset_x = mouse_x - present_game.x
+                        mouse_offset_y = mouse_y - present_game.y
+
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    dragging_present = False
+
+                elif event.type == pygame.MOUSEMOTION and dragging_present:
+                    mouse_x, mouse_y = event.pos
+                    present_game.x = mouse_x - mouse_offset_x
+                    present_game.y = mouse_y - mouse_offset_y
 
         if gamestate == "menu":
             screen.blit(title_image, (title_x, title_y))
@@ -242,16 +299,53 @@ def main():
             background(screen, flakes)
 
         elif gamestate == "game":
-            # screen.blit(hand_left, (hand_left_x, hand_left_y))
-            # screen.blit(hand_right, (hand_right_x, hand_right_y))
-            # present_menu.update()
-            # present_menu.draw(screen)
+            present_rect = present_game.get_rect()
+            present_game.draw(screen)
+
             if pygame.time.get_ticks() - game_start_time > hand_delay:
                 for hand in hands:
                     hand.update()
                     hand.draw(screen)
 
+                    hand_rect = pygame.Rect(hand.x, hand.y, hand.image.get_width(), 
+                                            hand.image.get_height())
+                    if present_rect.colliderect(hand_rect):
+                        gamestate = "gameover"
+                        final_score = scoreboard.score
+
+                        for hand in hands:
+                            hand.reset()
+                        scoreboard.score = 0
+
+                    if hand.y > 0 and present_rect.top > hand_rect.bottom and not hand.passed_present:
+                        scoreboard.add_score()
+                        hand.passed_present = True
+
             scoreboard.draw(screen)
+            background(screen, flakes)
+
+        elif gamestate == "gameover":
+            screen.fill(lightblue)
+
+            gameover_font = pygame.font.Font(None, 72)
+            gameover_text = gameover_font.render("Game Over!", True, black)
+            score_text = gameover_font.render(f"Final Score: {final_score}", True, black)
+
+            screen.blit(gameover_text, ((screen_width - gameover_text.get_width()) / 2, 
+                                         screen_height * 0.3))
+            screen.blit(score_text, ((screen_width - score_text.get_width()) / 2, 
+                                     screen_height * 0.5))
+
+            restart_text = font.render("Press Any Key to Restart", True, black)
+            screen.blit(restart_text, ((screen_width - restart_text.get_width()) / 2, 
+                                       screen_height * 0.7))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    gamestate = "menu"
+
             background(screen, flakes)
 
         pygame.display.flip()
