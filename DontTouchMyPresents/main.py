@@ -235,13 +235,28 @@ def main():
     start_button_height = screen_height * 0.085
     start_button_x = (screen_width - start_button_width) / 2
     start_button_y = screen_height * 0.75
-    start_button = pygame.Rect(start_button_x, start_button_y, start_button_width, start_button_height)
+    start_button = pygame.Rect(start_button_x, start_button_y, start_button_width, 
+                               start_button_height)
 
     button_text = "Press Any Keys"
     font = pygame.font.Font(None, 44)
     button_surface = font.render(button_text, True, black)
     button_x = start_button_x + (start_button_width - button_surface.get_width()) / 2
     button_y = start_button_y + (start_button_height - button_surface.get_height()) / 2
+
+    restart_button_width = screen_width * 0.3
+    restart_button_height = screen_height * 0.1
+    restart_button_x = (screen_width - restart_button_width) / 2
+    restart_button_y = screen_height * 0.65
+    restart_button = pygame.Rect(restart_button_x, restart_button_y, restart_button_width, 
+                                 restart_button_height)
+    
+    menu_button_width = screen_width * 0.4
+    menu_button_height = screen_height * 0.1
+    menu_button_x = (screen_width - menu_button_width) / 2
+    menu_button_y = screen_height * 0.8
+    menu_button = pygame.Rect(menu_button_x, menu_button_y, menu_button_width, 
+                              menu_button_height)
 
     dragging_present = False
     running = True
@@ -315,6 +330,9 @@ def main():
 
                         for hand in hands:
                             hand.reset()
+
+                        present_game.x = present_x
+                        present_game.y = present_y
                         scoreboard.score = 0
 
                     if hand.y > 0 and present_rect.top > hand_rect.bottom and not hand.passed_present:
@@ -329,23 +347,44 @@ def main():
 
             gameover_font = pygame.font.Font(None, 72)
             gameover_text = gameover_font.render("Game Over!", True, black)
-            score_text = gameover_font.render(f"Final Score: {final_score}", True, black)
+            gameover_x = (screen_width - gameover_text.get_width()) / 2
+            gameover_y = screen_height * 0.2
+            screen.blit(gameover_text, (gameover_x, gameover_y))
 
-            screen.blit(gameover_text, ((screen_width - gameover_text.get_width()) / 2, 
-                                         screen_height * 0.3))
-            screen.blit(score_text, ((screen_width - score_text.get_width()) / 2, 
-                                     screen_height * 0.5))
+            final_score_text = gameover_font.render(f"Final Score: {final_score}", True, black)
+            final_score_x = (screen_width - final_score_text.get_width()) / 2
+            final_score_y = screen_height * 0.35
+            screen.blit(final_score_text, (final_score_x, final_score_y))
 
-            restart_text = font.render("Press Any Key to Restart", True, black)
-            screen.blit(restart_text, ((screen_width - restart_text.get_width()) / 2, 
-                                       screen_height * 0.7))
+            pygame.draw.rect(screen, white, restart_button, border_radius = 12)
+            pygame.draw.rect(screen, black, restart_button, 4, border_radius = 12)
+            restart_text = "Restart"
+            restart_surface = font.render(restart_text, True, black)
+            restart_x = restart_button_x + (restart_button_width - restart_surface.get_width()) / 2
+            restart_y = restart_button_y + (restart_button_height - restart_surface.get_height()) / 2
+            screen.blit(restart_surface, (restart_x, restart_y))
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if restart_button.collidepoint(mouse_pos):
+                if pygame.mouse.get_pressed()[0]:
+                    gamestate = "game"
+                    for i, hand in enumerate(hands):
+                        hand.reset()
+                        if i == 1:
+                            hand.y -= screen_height * 0.75
+            
+            return_menu_text = "Return to Menu"
+            pygame.draw.rect(screen, white, menu_button, border_radius = 12)
+            pygame.draw.rect(screen, black, menu_button, 4, border_radius = 12)
+            menu_surface = font.render(return_menu_text, True, black)
+            menu_x = menu_button_x + (menu_button_width - menu_surface.get_width()) / 2
+            menu_y = menu_button_y + (menu_button_height - menu_surface.get_height()) / 2
+            screen.blit(menu_surface, (menu_x, menu_y))
+
+            if menu_button.collidepoint(mouse_pos):
+                if pygame.mouse.get_pressed()[0]:
                     gamestate = "menu"
-
+            
             background(screen, flakes)
 
         pygame.display.flip()
