@@ -1,10 +1,10 @@
 .PHONY: run install uninstall
 
 run:
-	pipx uninstall rouge_tetris && cd src && pipx install -e . && rouge_tetris
+	pipx uninstall interface && cd src && pipx install -e . && interface
 
 install:
 	cd src && pipx install -e .
 
 uninstall:
-	pipx uninstall rouge_tetris
+	pipx uninstall interface
