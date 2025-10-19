@@ -2,12 +2,39 @@ import random
 import sys
 import pygame
 import math
+import time
 pygame.init()
 
 screen_width, screen_height = 960, 720
 white = (255, 255, 255)
 black = (0, 0, 0)
 lightblue = (123, 194, 212)
+
+class HandGame:
+    def __init__(self, image, side):
+        self.side = side
+        self.image = image
+        self.speed = 3.2
+        self.reset()
+
+    def reset(self):
+        self.y = - self.image.get_height()
+        if self.side == "left":
+            self.x = screen_width * 0
+        else:
+            self.x = screen_width - self.image.get_width() - screen_width * 0
+
+    def update(self):
+        if self.speed < 4.5:
+            self.speed += 0.01
+
+        self.y += self.speed
+        if self.y > screen_height:
+            self.reset()
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+        
 
 class ScoreBoard:
     def __init__ (self, x, y):
@@ -118,6 +145,19 @@ def load_hand_right_image():
                                                                  int(screen_height * 0.65)))
     return hand_right_image
 
+def load_handleft_ingame():
+    handleft_ingame = pygame.image.load("DontTouchMyPresents/Assets/handingame.png")
+    handleft_ingame = pygame.transform.scale(handleft_ingame, (int(screen_width * 0.55), 
+                                                               int(screen_height * 0.5)))
+    return handleft_ingame
+
+def load_handright_ingame():
+    handright_ingame = pygame.image.load("DontTouchMyPresents/Assets/handingame.png")
+    handright_ingame = pygame.transform.flip(handright_ingame, True, False)
+    handright_ingame = pygame.transform.scale(handright_ingame, (int(screen_width * 0.55), 
+                                                                 int(screen_height * 0.5)))
+    return handright_ingame
+
 def main():
     flakes = [Flake(screen_width, screen_height) for _ in range(250)]
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -148,6 +188,18 @@ def main():
     hand_right_x = (screen_width - hand_right.get_width()) * 0.61
     hand_right_y = screen_height * 0.45
 
+    handleft_ingame = load_handleft_ingame()
+    handright_ingame = load_handright_ingame()
+    hand_delay = 2000
+
+    hands = [
+        HandGame(handleft_ingame, "left"),
+        HandGame(handright_ingame, "right")
+    ]
+
+    # Offset to alternate the hands' starting positions
+    hands[1].y -= screen_height * 0.75
+
     start_button_width = screen_width * 0.33
     start_button_height = screen_height * 0.085
     start_button_x = (screen_width - start_button_width) / 2
@@ -171,6 +223,7 @@ def main():
         if gamestate == "menu" and event.type == pygame.MOUSEBUTTONDOWN:
             if start_button.collidepoint(event.pos):
                 gamestate = "game"
+                game_start_time = pygame.time.get_ticks()
 
         if gamestate == "menu":
             screen.blit(title_image, (title_x, title_y))
@@ -189,6 +242,15 @@ def main():
             background(screen, flakes)
 
         elif gamestate == "game":
+            # screen.blit(hand_left, (hand_left_x, hand_left_y))
+            # screen.blit(hand_right, (hand_right_x, hand_right_y))
+            # present_menu.update()
+            # present_menu.draw(screen)
+            if pygame.time.get_ticks() - game_start_time > hand_delay:
+                for hand in hands:
+                    hand.update()
+                    hand.draw(screen)
+
             scoreboard.draw(screen)
             background(screen, flakes)
 
