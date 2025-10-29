@@ -1,5 +1,5 @@
 import os
-os.environ.setdefault("PYGAME_DETECT_AVX2", "1")
+# os.environ.setdefault("PYGAME_DETECT_AVX2", "1")
 import sys
 import pygame
 import random
@@ -196,7 +196,22 @@ def main():
 	game_state.start_game()
 	game_state.debug_print_hand()
 	
-	
+	pygame.init()
+	screen = pygame.display.set_mode((screen_width, screen_height))
+	pygame.display.set_caption("Card Game")
+ 
+	clock = pygame.time.Clock()
+ 
+	running = True
+	while running:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				running = False
+		
+		screen.fill((25, 23, 22))
+		pygame.display.flip()
+		clock.tick(60)
+		
 	# print("Hello world!")
 	# my_deck = Deck()
 	# print("Instantiated deck")
