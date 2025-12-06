@@ -48,7 +48,7 @@ class Menu:
     def change_game(self):
         match self.selected_item:
             case 0:
-                self.new_game = "Tetris"
+                self.new_game = "Invaders"
             case 1:
                 pass
             case 2:

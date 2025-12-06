@@ -1,16 +1,11 @@
-# --- info
-# shell-ul e doar un fel de "wrapper" pentru restul jocurilor
-# fiecare joc deschis se afla in interiorul shellului
-# ca sa putem trece usor de la meniu la unul din jocuri si inapoi.
-# --- joey
-
+# idea inspired by one of my previous projects that i made for the robochallenge contest, credit in README.md
 import pygame
 
 from .menu.menu import *
 
-from .tetris.game import *
+from .invaders.game import *
 
-GameType = Tetris | Menu | None
+GameType = Invaders | Menu | None
 
 class Shell:
     def parse_events(self):
@@ -18,6 +13,9 @@ class Shell:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    pygame.display.toggle_fullscreen()
             if self.game and hasattr(self.game, 'handle_event'):
                 self.game.handle_event(event)
 
@@ -45,6 +43,6 @@ class Shell:
             
         if isinstance(self.game, Menu) and self.game.new_game != "None":
             ngame = self.game.new_game
-            if ngame == "Tetris":
-                self.game = Tetris(self.screen)
+            if ngame == "Invaders":
+                self.game = Invaders(self.screen, self.glb)
                 return
