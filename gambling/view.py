@@ -152,18 +152,27 @@ class GameView(Observer):
         pygame.draw.rect(self.screen, (60, 60, 70), rect, 2)
 
     def draw_card(self, card, rect):
-        # Card Body
-        pygame.draw.rect(self.screen, (245, 245, 245), rect, border_radius=5)
-        pygame.draw.rect(self.screen, (20, 20, 20), rect, 2, border_radius=5)
+        # Try to load specific card asset
+        # Expected naming: "cards/red_1.png", "cards/blue_5.png"
+        image_key = f"cards/{card.color}_{card.number}.png"
+        card_img = self.rm.load_image(image_key, (rect.width, rect.height))
+        
+        if card_img:
+            self.screen.blit(card_img, rect)
+            return
+
+        # Fallback: Code Rendering
+        pygame.draw.rect(self.screen, (240, 240, 240), rect)
+        pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
         
         # Color Stripe / Fill
         c = (100, 100, 100)
-        if card.color == 'red': c = (220, 60, 60)
-        elif card.color == 'blue': c = (60, 100, 220)
-        elif card.color == 'yellow': c = (220, 220, 60)
+        if card.color == 'red': c = COLOR_RED
+        elif card.color == 'blue': c = COLOR_BLUE
+        elif card.color == 'yellow': c = COLOR_YELLOW
         
-        inner_rect = rect.inflate(-12, -12)
-        pygame.draw.rect(self.screen, c, inner_rect, border_radius=3)
+        inner_rect = rect.inflate(-10, -10)
+        pygame.draw.rect(self.screen, c, inner_rect)
         
         # Number
         font = self.rm.load_font(60)
