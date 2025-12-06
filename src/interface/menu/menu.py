@@ -50,7 +50,7 @@ class Menu:
             case 0:
                 self.new_game = "Invaders"
             case 1:
-                pass
+                self.new_game = "DontTouchMyPresents"
             case 2:
                 pass
         
