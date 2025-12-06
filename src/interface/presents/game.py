@@ -255,3 +255,5 @@ class DontTouchMyPresents:
             pygame.draw.rect(self.screen, self.black, self.menu_btn, 4, border_radius=12)
             menu_surf = self.font_small.render("Return to Menu", True, self.black)
             self.screen.blit(menu_surf, menu_surf.get_rect(center=self.menu_btn.center))
+
+        pygame.display.flip()
