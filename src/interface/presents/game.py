@@ -96,14 +96,14 @@ class DontTouchMyPresents:
         self.black = (0, 0, 0)
         self.lightblue = (123, 194, 212)
 
-        # Asset Loading Path Setup
-        base_path = os.path.dirname(__file__)
-        assets_path = os.path.join(base_path, "assets")
-
         # Load Fonts
         self.font_large = pygame.font.Font(None, 72)
         self.font_medium = pygame.font.Font(None, 56)
         self.font_small = pygame.font.Font(None, 44)
+
+        # Asset Loading Path Setup
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        assets_path = os.path.join(base_path, "..", "..", "assets", "presents")
 
         # Load Images
         def load_img(name, scale_w, scale_h, flip=False):
