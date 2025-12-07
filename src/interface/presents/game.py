@@ -1,277 +1,178 @@
 import pygame
-import random
 import math
 import os
 
-ORIGINAL_HEIGHT = 720
-TARGET_HEIGHT = 1080
-SCALE = TARGET_HEIGHT / ORIGINAL_HEIGHT # 1.5
-
-class HandGame:
-    def __init__(self, image, side, screen_width, screen_height):
-        self.side = side
-        self.image = image
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.speed = 6 * SCALE
-        self.reset()
-        self.passed_present = False
-        self.active = True
-        self.last_reset_time = 0
-        self.delay_after_reset = 250
-
-    def reset(self):
-        self.y = - self.image.get_height()
-        if self.side == "left":
-            self.x = 0
-        else:
-            self.x = self.screen_width - self.image.get_width()
-        self.passed_present = False
-        self.active = False
-        self.last_reset_time = pygame.time.get_ticks()
-
-    def update(self):
-        current_time = pygame.time.get_ticks()
-        if not self.active:
-            if current_time - self.last_reset_time >= self.delay_after_reset:
-                self.active = True
-            else:
-                return
-        
-        if self.speed < (8.5 * SCALE):
-            self.speed += 0.02 * SCALE
-
-        self.y += self.speed
-        if self.y > self.screen_height:
-            self.reset()
-
-    def draw(self, screen):
-        if self.active:
-            screen.blit(self.image, (self.x, self.y))
-
-class Flake:
-    def __init__(self, screen_width, screen_height):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.reset()
-    
-    def reset(self):
-        self.x = random.randint(0, self.screen_width)
-        self.y = random.randint(-self.screen_height, 0)
-        self.speed = random.uniform(1, 3) * SCALE
-        self.size = int(random.randint(4, 5) * (SCALE * 0.8))
-
-    def update(self):
-        self.y += self.speed
-        self.x += random.uniform(-0.3, 0.3) * SCALE
-        if self.y > self.screen_height:
-            self.reset()
-    
-    def draw(self, screen):
-        pygame.draw.circle(screen, (255, 255, 255), (int(self.x), int(self.y)), self.size)
-
-class ScoreBoard:
-    def __init__(self, x, y, w, h, font):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.score = 0
-        self.font = font
-
-    def add_score(self):
-        self.score += 1
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (255, 255, 255), self.rect)
-        pygame.draw.rect(screen, (0, 0, 0), self.rect, 4)
-        score_text = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
-        text_rect = score_text.get_rect(center=self.rect.center)
-        screen.blit(score_text, text_rect)
-
+from constants import *
+from hand import HandGame
+from flake import Flake
+from scoreboard import ScoreBoard
 
 class DontTouchMyPresents:
-    def __init__(self, screen, globals_obj):
-        self.main_screen = screen
-        self.glb = globals_obj
-        self.running = True
-        
-        self.game_w = 1440
-        self.game_h = 1080
-        self.game_surface = pygame.Surface((self.game_w, self.game_h))
-        self.offset_x = (self.main_screen.get_width() - self.game_w) // 2
-        
-        self.w, self.h = self.game_w, self.game_h
-        
-        # Colors
-        self.white = (255, 255, 255)
-        self.black = (0, 0, 0)
-        self.lightblue = (123, 194, 212)
-        self.bars_color = (0, 0, 0)
+	def __init__(self, screen, globals_obj):
+		self.main_screen = screen
+		self.glb = globals_obj
+		self.running = True
+		
+		# Setup Game Surface
+		self.game_w = GAME_W
+		self.game_h = GAME_H
+		self.game_surface = pygame.Surface((self.game_w, self.game_h))
+		self.offset_x = (self.main_screen.get_width() - self.game_w) // 2
+		
+		self.w, self.h = self.game_w, self.game_h
+		
+		# Load Fonts
+		self.font_large = pygame.font.Font(None, int(72 * SCALE))
+		self.font_medium = pygame.font.Font(None, int(56 * SCALE))
+		self.font_small = pygame.font.Font(None, int(44 * SCALE))
 
-        # Load Fonts
-        self.font_large = pygame.font.Font(None, int(72 * SCALE))
-        self.font_medium = pygame.font.Font(None, int(56 * SCALE))
-        self.font_small = pygame.font.Font(None, int(44 * SCALE))
+		# Helper Load Images
+		def load_img(name, scale_w, scale_h, flip=False):
+			path = os.path.join(ASSETS_PATH, name)
+			img = pygame.image.load(path)
+			if flip: img = pygame.transform.flip(img, True, False)
+			return pygame.transform.scale(img, (int(scale_w), int(scale_h)))
 
-        # Asset Loading Path Setup
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        assets_path = os.path.join(base_path, "..", "..", "assets", "presents")
+		# Loading Assets
+		self.title_img = load_img("title.png", self.w * 0.6, self.h * 0.3)
+		self.present_img = load_img("present.png", self.w * 0.16, self.h * 0.18)
+		self.hand_left_menu = load_img("menu_hand.png", self.w * 0.39, self.h * 0.65)
+		self.hand_right_menu = load_img("menu_hand.png", self.w * 0.39, self.h * 0.65, flip=True)
+		self.hand_ingame_l = load_img("ingame_hand.png", self.w * 0.55, self.h * 0.16)
+		self.hand_ingame_r = load_img("ingame_hand.png", self.w * 0.55, self.h * 0.16, flip=True)
 
-        # Load Images
-        def load_img(name, scale_w, scale_h, flip=False):
-            path = os.path.join(assets_path, name)
-            img = pygame.image.load(path)
-            if flip: img = pygame.transform.flip(img, True, False)
-            return pygame.transform.scale(img, (int(scale_w), int(scale_h)))
+		# Snowflakes
+		self.flakes = [Flake(self.w, self.h) for _ in range(FLAKE_COUNT)]
+		self.gamestate = "menu"
+		
+		# UI Elements
+		self.scoreboard = ScoreBoard((self.w - self.w * 0.2)/2, self.h * 0.03, self.w * 0.2, self.h * 0.1, self.font_medium)
+		
+		# Buttons
+		self.start_btn = pygame.Rect((self.w - self.w*0.33)/2, self.h*0.75, self.w*0.33, self.h*0.085)
+		self.restart_btn = pygame.Rect((self.w - self.w*0.3)/2, self.h*0.65, self.w*0.3, self.h*0.1)
+		self.menu_btn = pygame.Rect((self.w - self.w*0.4)/2, self.h*0.8, self.w*0.4, self.h*0.1)
 
-        # Loading Assets
-        self.title_img = load_img("title4.png", self.w * 0.6, self.h * 0.3)
-        self.present_img = load_img("present1.png", self.w * 0.16, self.h * 0.18)
-        self.hand_left_menu = load_img("redhand5.png", self.w * 0.39, self.h * 0.65)
-        self.hand_right_menu = load_img("redhand5.png", self.w * 0.39, self.h * 0.65, flip=True)
-        self.hand_ingame_l = load_img("handingame.png", self.w * 0.55, self.h * 0.16)
-        self.hand_ingame_r = load_img("handingame.png", self.w * 0.55, self.h * 0.16, flip=True)
+		# Game Objects
+		self.present_rect = pygame.Rect(0, 0, self.present_img.get_width(), self.present_img.get_height())
+		self.initial_present_pos = ((self.w - self.present_rect.w)/2, self.h * 0.45)
+		self.present_rect.topleft = self.initial_present_pos
 
-        self.flakes = [Flake(self.w, self.h) for _ in range(550)]
-        self.gamestate = "menu"
-        
-        # UI Elements
-        self.scoreboard = ScoreBoard((self.w - self.w * 0.2)/2, self.h * 0.03, self.w * 0.2, self.h * 0.1, self.font_medium)
-        
-        # Buttons
-        self.start_btn = pygame.Rect((self.w - self.w*0.33)/2, self.h*0.75, self.w*0.33, self.h*0.085)
-        self.restart_btn = pygame.Rect((self.w - self.w*0.3)/2, self.h*0.65, self.w*0.3, self.h*0.1)
-        self.menu_btn = pygame.Rect((self.w - self.w*0.4)/2, self.h*0.8, self.w*0.4, self.h*0.1)
+		self.hands = [
+			HandGame(self.hand_ingame_l, "left", self.w, self.h),
+			HandGame(self.hand_ingame_r, "right", self.w, self.h)
+		]
 
-        # Game Objects
-        self.present_rect = pygame.Rect(0, 0, self.present_img.get_width(), self.present_img.get_height())
-        self.initial_present_pos = ((self.w - self.present_rect.w)/2, self.h * 0.45)
-        self.present_rect.topleft = self.initial_present_pos
+		# Offset hand folosind constanta
+		self.hands[1].y -= self.h * HAND_OFFSET_Y_RATIO
 
-        self.hands = [
-            HandGame(self.hand_ingame_l, "left", self.w, self.h),
-            HandGame(self.hand_ingame_r, "right", self.w, self.h)
-        ]
-        # Offset hand
-        self.hands[1].y -= self.h * 0.75
+		self.dragging_present = False
+		self.mouse_offset = (0, 0)
+		self.game_start_time = 0
+		self.hand_delay = 1500
+		self.final_score = 0
 
-        self.dragging_present = False
-        self.mouse_offset = (0, 0)
-        self.game_start_time = 0
-        self.hand_delay = 1500
-        self.final_score = 0
+	def reset_game_session(self):
+		self.gamestate = "game"
+		self.game_start_time = pygame.time.get_ticks()
+		self.scoreboard.score = 0
+		self.present_rect.topleft = self.initial_present_pos
+		for i, hand in enumerate(self.hands):
+			hand.reset()
+			if i == 1: hand.y -= self.h * HAND_OFFSET_Y_RATIO
 
-    def reset_game_session(self):
-        self.gamestate = "game"
-        self.game_start_time = pygame.time.get_ticks()
-        self.scoreboard.score = 0
-        self.present_rect.topleft = self.initial_present_pos
-        for i, hand in enumerate(self.hands):
-            hand.reset()
-            if i == 1: hand.y -= self.h * 0.6
+	def handle_event(self, event):
+		if self.gamestate == "menu":
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				mx, my = event.pos
+				mx -= self.offset_x
+				if self.start_btn.collidepoint((mx, my)):
+					self.reset_game_session()
 
-    def handle_event(self, event):
-        # Event handling
-        if self.gamestate == "menu":
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = event.pos
-                mx -= self.offset_x
-                if self.start_btn.collidepoint((mx, my)):
-                    self.reset_game_session()
+		elif self.gamestate == "game":
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				mx, my = event.pos
+				mx -= self.offset_x
+				if self.present_rect.collidepoint((mx, my)):
+					self.dragging_present = True
+					self.mouse_offset = (mx - self.present_rect.x, my - self.present_rect.y)
+			elif event.type == pygame.MOUSEBUTTONUP:
+				self.dragging_present = False
+			elif event.type == pygame.MOUSEMOTION and self.dragging_present:
+				mx, my = event.pos
+				mx -= self.offset_x
+				self.present_rect.x = mx - self.mouse_offset[0]
+				self.present_rect.y = my - self.mouse_offset[1]
 
-        elif self.gamestate == "game":
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = event.pos
-                mx -= self.offset_x
-                if self.present_rect.collidepoint((mx, my)):
-                    self.dragging_present = True
-                    self.mouse_offset = (mx - self.present_rect.x, my - self.present_rect.y)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                self.dragging_present = False
-            elif event.type == pygame.MOUSEMOTION and self.dragging_present:
-                mx, my = event.pos
-                mx -= self.offset_x
-                self.present_rect.x = mx - self.mouse_offset[0]
-                self.present_rect.y = my - self.mouse_offset[1]
+		elif self.gamestate == "gameover":
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				mx, my = event.pos
+				mx -= self.offset_x
+				if self.restart_btn.collidepoint((mx, my)):
+					self.reset_game_session()
+				elif self.menu_btn.collidepoint((mx, my)):
+					self.glb.return_to_menu = True
 
-        elif self.gamestate == "gameover":
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = event.pos
-                mx -= self.offset_x
-                if self.restart_btn.collidepoint((mx, my)):
-                    self.reset_game_session()
-                elif self.menu_btn.collidepoint((mx, my)):
-                    self.glb.return_to_menu = True
+	def update(self):
+		self.game_surface.fill(LIGHTBLUE)
 
-    def update(self):
-        self.game_surface.fill(self.lightblue)
+		for flake in self.flakes:
+			flake.update()
+			flake.draw(self.game_surface)
 
-        # Draw Background Flakes
-        for flake in self.flakes:
-            flake.update()
-            flake.draw(self.game_surface)
+		if self.gamestate == "menu":
+			t_x = (self.w - self.title_img.get_width()) / 2 + math.cos(pygame.time.get_ticks() * 0.002) * 2
+			t_y = self.h * 0.05 + math.sin(pygame.time.get_ticks() * 0.002) * 2
+			self.game_surface.blit(self.title_img, (t_x, t_y))
 
-        if self.gamestate == "menu":
-            # Draw Title logic
-            t_x = (self.w - self.title_img.get_width()) / 2 + math.cos(pygame.time.get_ticks() * 0.002) * 2
-            t_y = self.h * 0.05 + math.sin(pygame.time.get_ticks() * 0.002) * 2
-            self.game_surface.blit(self.title_img, (t_x, t_y))
+			self.game_surface.blit(self.hand_left_menu, ((self.w - self.hand_left_menu.get_width()) * 0.39, self.h * 0.45))
+			self.game_surface.blit(self.hand_right_menu, ((self.w - self.hand_right_menu.get_width()) * 0.61, self.h * 0.45))
+			
+			p_x = self.initial_present_pos[0] + math.cos(pygame.time.get_ticks() * 0.003) * 3
+			p_y = self.initial_present_pos[1] + math.sin(pygame.time.get_ticks() * 0.003) * 3
+			self.game_surface.blit(self.present_img, (p_x, p_y))
 
-            # Draw Menu Hands
-            self.game_surface.blit(self.hand_left_menu, ((self.w - self.hand_left_menu.get_width()) * 0.39, self.h * 0.45))
-            self.game_surface.blit(self.hand_right_menu, ((self.w - self.hand_right_menu.get_width()) * 0.61, self.h * 0.45))
-            
-            # Draw Present
-            p_x = self.initial_present_pos[0] + math.cos(pygame.time.get_ticks() * 0.003) * 3
-            p_y = self.initial_present_pos[1] + math.sin(pygame.time.get_ticks() * 0.003) * 3
-            self.game_surface.blit(self.present_img, (p_x, p_y))
+			pygame.draw.rect(self.game_surface, WHITE, self.start_btn, border_radius=12)
+			pygame.draw.rect(self.game_surface, BLACK, self.start_btn, 4, border_radius=12)
+			text_surf = self.font_small.render("Start Game", True, BLACK)
+			self.game_surface.blit(text_surf, text_surf.get_rect(center=self.start_btn.center))
 
-            # Start Button
-            pygame.draw.rect(self.game_surface, self.white, self.start_btn, border_radius=12)
-            pygame.draw.rect(self.game_surface, self.black, self.start_btn, 4, border_radius=12)
-            text_surf = self.font_small.render("Start Game", True, self.black)
-            self.game_surface.blit(text_surf, text_surf.get_rect(center=self.start_btn.center))
+		elif self.gamestate == "game":
+			self.game_surface.blit(self.present_img, self.present_rect.topleft)
 
-        elif self.gamestate == "game":
-            self.game_surface.blit(self.present_img, self.present_rect.topleft)
+			if pygame.time.get_ticks() - self.game_start_time > self.hand_delay:
+				for hand in self.hands:
+					hand.update()
+					hand.draw(self.game_surface)
+					
+					hand_rect = pygame.Rect(hand.x, hand.y, hand.image.get_width(), hand.image.get_height())
+					if self.present_rect.colliderect(hand_rect):
+						self.gamestate = "gameover"
+						self.final_score = self.scoreboard.score
 
-            # Update & Draw Hands logic
-            if pygame.time.get_ticks() - self.game_start_time > self.hand_delay:
-                for hand in self.hands:
-                    hand.update()
-                    hand.draw(self.game_surface)
-                    
-                    # Collision
-                    hand_rect = pygame.Rect(hand.x, hand.y, hand.image.get_width(), hand.image.get_height())
-                    if self.present_rect.colliderect(hand_rect):
-                        self.gamestate = "gameover"
-                        self.final_score = self.scoreboard.score
+					if hand.y > 0 and self.present_rect.top > hand_rect.bottom and not hand.passed_present:
+						self.scoreboard.add_score()
+						hand.passed_present = True
 
-                    # Score Logic
-                    if hand.y > 0 and self.present_rect.top > hand_rect.bottom and not hand.passed_present:
-                        self.scoreboard.add_score()
-                        hand.passed_present = True
+			self.scoreboard.draw(self.game_surface)
 
-            self.scoreboard.draw(self.game_surface)
+		elif self.gamestate == "gameover":
+			go_text = self.font_large.render("Game Over!", True, BLACK)
+			self.game_surface.blit(go_text, go_text.get_rect(center=(self.w/2, self.h*0.2)))
+			
+			sc_text = self.font_large.render(f"Final Score: {self.final_score}", True, BLACK)
+			self.game_surface.blit(sc_text, sc_text.get_rect(center=(self.w/2, self.h*0.35)))
 
-        elif self.gamestate == "gameover":
-            # Game Over Text
-            go_text = self.font_large.render("Game Over!", True, self.black)
-            self.game_surface.blit(go_text, go_text.get_rect(center=(self.w/2, self.h*0.2)))
-            
-            sc_text = self.font_large.render(f"Final Score: {self.final_score}", True, self.black)
-            self.game_surface.blit(sc_text, sc_text.get_rect(center=(self.w/2, self.h*0.35)))
+			pygame.draw.rect(self.game_surface, WHITE, self.restart_btn, border_radius=12)
+			pygame.draw.rect(self.game_surface, BLACK, self.restart_btn, 4, border_radius=12)
+			res_surf = self.font_small.render("Restart", True, BLACK)
+			self.game_surface.blit(res_surf, res_surf.get_rect(center=self.restart_btn.center))
 
-            # Restart Button
-            pygame.draw.rect(self.game_surface, self.white, self.restart_btn, border_radius=12)
-            pygame.draw.rect(self.game_surface, self.black, self.restart_btn, 4, border_radius=12)
-            res_surf = self.font_small.render("Restart", True, self.black)
-            self.game_surface.blit(res_surf, res_surf.get_rect(center=self.restart_btn.center))
+			pygame.draw.rect(self.game_surface, WHITE, self.menu_btn, border_radius=12)
+			pygame.draw.rect(self.game_surface, BLACK, self.menu_btn, 4, border_radius=12)
+			menu_surf = self.font_small.render("Return to Menu", True, BLACK)
+			self.game_surface.blit(menu_surf, menu_surf.get_rect(center=self.menu_btn.center))
 
-            # Menu Button
-            pygame.draw.rect(self.game_surface, self.white, self.menu_btn, border_radius=12)
-            pygame.draw.rect(self.game_surface, self.black, self.menu_btn, 4, border_radius=12)
-            menu_surf = self.font_small.render("Return to Menu", True, self.black)
-            self.game_surface.blit(menu_surf, menu_surf.get_rect(center=self.menu_btn.center))
-
-        self.main_screen.fill(self.bars_color)
-        self.main_screen.blit(self.game_surface, (self.offset_x, 0))
-        pygame.display.flip()
+		self.main_screen.fill(BARS_COLOR)
+		self.main_screen.blit(self.game_surface, (self.offset_x, 0))
+		pygame.display.flip()
