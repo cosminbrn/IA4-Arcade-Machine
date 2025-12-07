@@ -1,11 +1,12 @@
 import sys
 import pygame
 from models import GameModel
-from view import GameView, SCREEN_WIDTH, SCREEN_HEIGHT
+from view import GameView
+from settings import globals
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((globals.WINWIDTH, globals.WINHEIGHT))
     pygame.display.set_caption("Metin2 Okey Card Game")
     clock = pygame.time.Clock()
 
@@ -29,9 +30,9 @@ def main():
                 if command:
                     command.execute()
         
-        # 2. Update (Handled by Observer in View, but we can do continuous anims here)
+        # 2. Update
         
-        # 3. Draw (Since View observes Model, it draws on update, but for 60FPS loop we usually force draw)
+        # 3. Draw 
         view.draw()
         
         clock.tick(60)

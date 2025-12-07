@@ -3,9 +3,11 @@ import os
 from observers import Observer
 from commands import *
 
-# Constants for Layout (Approximate based on 720x960 and descriptions)
-SCREEN_WIDTH = 720
-SCREEN_HEIGHT = 960
+from settings import globals
+
+# Constants for Layout
+SCREEN_WIDTH = globals.VIRTUAL_WIDTH
+SCREEN_HEIGHT = globals.VIRTUAL_HEIGHT
 
 # Colors
 COLOR_BG = (25, 25, 25)
@@ -48,7 +50,18 @@ class ResourceManager:
 class GameView(Observer):
     def __init__(self, model, screen):
         self.model = model
-        self.screen = screen
+        self.real_screen = screen
+        
+        # Calculate scaling
+        run_w, run_h = globals.WINWIDTH, globals.WINHEIGHT
+        virt_w, virt_h = globals.VIRTUAL_WIDTH, globals.VIRTUAL_HEIGHT
+        
+        self.scale = min(run_w / virt_w, run_h / virt_h)
+        self.offset_x = (run_w - virt_w * self.scale) // 2
+        self.offset_y = (run_h - virt_h * self.scale) // 2
+        
+        self.screen = pygame.Surface((virt_w, virt_h)) # Virtual Surface for drawing
+        
         self.rm = ResourceManager()
         self.model.attach(self)
         
@@ -141,6 +154,13 @@ class GameView(Observer):
             rect = msg_text.get_rect(center=(SCREEN_WIDTH//2, 600))
             self.screen.blit(msg_text, rect)
 
+        # Final Blit to Real Screen
+        scaled_w = int(globals.VIRTUAL_WIDTH * self.scale)
+        scaled_h = int(globals.VIRTUAL_HEIGHT * self.scale)
+        scaled_surface = pygame.transform.scale(self.screen, (scaled_w, scaled_h))
+        
+        self.real_screen.fill((0, 0, 0)) # Black bars
+        self.real_screen.blit(scaled_surface, (self.offset_x, self.offset_y))
         pygame.display.flip()
 
     def draw_slot(self, rect, type_name):
@@ -202,6 +222,13 @@ class GameView(Observer):
         Returns a Command object based on click
         Button: 1=Left, 3=Right
         """
+        # Transform pos from Screen Space to Virtual Space
+        real_x, real_y = pos
+        virt_x = (real_x - self.offset_x) / self.scale
+        virt_y = (real_y - self.offset_y) / self.scale
+        
+        pos = (virt_x, virt_y)
+        
         # Check Hand Clicks
         for i, rect in enumerate(self.hand_rects):
             if rect.collidepoint(pos):
