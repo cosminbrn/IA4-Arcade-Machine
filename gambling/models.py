@@ -14,17 +14,15 @@ class Deck:
     def __init__(self):
         self.cards = deque()
         colors = ['red', 'blue', 'yellow']
-        for _ in range(1): # Standard deck? Or multiple? Metin2 Okey usually has sets. Assuming 1 set of 1-8 * 3 colors = 24 cards.
+        for _ in range(1):
             for number in range(1, 9):
                 for color in colors:
                     self.cards.append(Card(number, color))
         
     def shuffle(self):
-        # Convert to list to shuffle, then back to deque
         l = list(self.cards)
         random.shuffle(l)
         self.cards = deque(l)
-        # TODO: Implement "bad shuffle" prevention if needed (per original code)
 
     def draw(self):
         if len(self.cards) > 0:
@@ -69,9 +67,6 @@ class GameModel(Subject):
                     self.hand[i] = card
 
     def draw_card_action(self):
-        """Logic: If hand has space, draw 1. If empty, fill logic?
-        User said: 'pressing the deck of cards draws cards, one by one'
-        """
         # Find first empty slot
         slot_index = -1
         for i in range(5):
@@ -88,7 +83,6 @@ class GameModel(Subject):
                 self.check_game_over()
 
     def discard_card(self, hand_index):
-        """Right click: permanently remove"""
         if 0 <= hand_index < 5:
             if self.hand[hand_index] is not None:
                 self.hand[hand_index] = None
@@ -96,7 +90,6 @@ class GameModel(Subject):
                 self.check_game_over()
 
     def move_hand_to_combo(self, hand_index):
-        """Left click hand -> combo"""
         if 0 <= hand_index < 5 and self.hand[hand_index] is not None:
             # Find empty combo slot
             combo_index = -1
@@ -146,8 +139,6 @@ class GameModel(Subject):
             self.notify()
 
     def calculate_points(self, c1, c2, c3):
-        # Copy logic from original main.py
-        # Sort by number to make checking sequences easier
         cards = sorted([c1, c2, c3], key=lambda x: x.number)
         x, y, z = cards[0].number, cards[1].number, cards[2].number
         
@@ -155,8 +146,8 @@ class GameModel(Subject):
         
         # 1. Same Number (Set)
         if x == y == z:
-            return (x + 1) * 10 # Original rule? (x+1)*10 seems odd for set, but following original
-        
+            return (x + 1) * 10 
+                    
         # 2. Consecutive (Run)
         if x + 1 == y and y + 1 == z:
             # Color matters for runs
@@ -178,8 +169,5 @@ class GameModel(Subject):
         return 0
 
     def check_game_over(self):
-        # Game over if deck is empty AND hand is empty? 
-        # Or if deck empty and no moves possible.
-        # For now, simple check:
         if self.deck.is_empty() and all(c is None for c in self.hand) and all(c is None for c in self.combination):
             self.game_over = True
