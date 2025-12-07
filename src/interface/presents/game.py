@@ -13,12 +13,12 @@ class HandGame:
         self.image = image
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.speed = 3.5 * SCALE
+        self.speed = 6 * SCALE
         self.reset()
         self.passed_present = False
         self.active = True
         self.last_reset_time = 0
-        self.delay_after_reset = 500
+        self.delay_after_reset = 250
 
     def reset(self):
         self.y = - self.image.get_height()
@@ -38,8 +38,8 @@ class HandGame:
             else:
                 return
         
-        if self.speed < (4.5 * SCALE):
-            self.speed += 0.015 * SCALE
+        if self.speed < (8.5 * SCALE):
+            self.speed += 0.02 * SCALE
 
         self.y += self.speed
         if self.y > self.screen_height:
@@ -166,7 +166,7 @@ class DontTouchMyPresents:
         self.present_rect.topleft = self.initial_present_pos
         for i, hand in enumerate(self.hands):
             hand.reset()
-            if i == 1: hand.y -= self.h * 0.75
+            if i == 1: hand.y -= self.h * 0.6
 
     def handle_event(self, event):
         # Event handling
