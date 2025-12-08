@@ -27,9 +27,9 @@ class GameView(Observer):
 		run_w, run_h = globals.WINWIDTH, globals.WINHEIGHT
 		virt_w, virt_h = globals.VIRTUAL_WIDTH, globals.VIRTUAL_HEIGHT
 
-		self.scale = min(run_w / virt_w, run_h / virt_h)
+		self.scale = min(run_w / virt_w, run_h / virt_h) * 0.95
 		self.offset_x = (run_w - virt_w * self.scale) // 2
-		self.offset_y = (run_h - virt_h * self.scale) // 2
+		self.offset_y = (run_h - virt_h * self.scale) // 2 
 
 		self.screen = pygame.Surface((virt_w, virt_h)) # Virtual Surface for drawing
 
