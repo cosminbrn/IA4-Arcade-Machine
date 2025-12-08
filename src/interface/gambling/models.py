@@ -1,7 +1,7 @@
 import random
 import time
 from collections import deque
-from observers import Subject
+from .observers import Subject
 
 # Module that handles internal logic
 
@@ -47,9 +47,9 @@ class Deck:
 	# Returns True if starting hand contains three cards of the same color
 	def has_three_same_color(self):
 		color_counts = {}
-		for Card in self.cards[:5]:
-			color_counts[Card.color] = color_counts.get(Card.color, 0) + 1
-			if color_counts[Card.color] >= 3:
+		for card in self.cards[:5]:
+			color_counts[card.color] = color_counts.get(card.color, 0) + 1
+			if color_counts[card.color] >= 3:
 				return True
 		return False
 

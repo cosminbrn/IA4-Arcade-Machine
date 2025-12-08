@@ -72,7 +72,7 @@ class Menu:
             case 1:
                 self.new_game = "DontTouchMyPresents"
             case 2:
-                pass
+                self.new_game = "Gambling"
         
         print("Changing game to " + self.new_game + "...")
         self.running = False

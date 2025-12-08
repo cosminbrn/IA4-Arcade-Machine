@@ -7,7 +7,9 @@ from .invaders.game import *
 
 from .presents.game import *
 
-GameType = Invaders | Menu | DontTouchMyPresents | None
+from .gambling.main import *
+
+GameType = Invaders | Menu | DontTouchMyPresents | Gambling
 
 class Shell:
     def parse_events(self):
@@ -50,4 +52,7 @@ class Shell:
                 return
             if ngame == "DontTouchMyPresents":
                 self.game = DontTouchMyPresents(self.screen, self.glb)
+                return
+            if ngame == "Gambling":
+                self.game = Gambling(self.screen, self.glb)
                 return

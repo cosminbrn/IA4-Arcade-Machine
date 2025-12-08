@@ -1,19 +1,17 @@
 import pygame
 import os
-from observers import Observer
-from commands import *
-from resource_manager import ResourceManager
-from card_renderer import CardRenderer
-from animation_manager import AnimationManager
+from .observers import Observer
+from .commands import *
+from .resource_manager import ResourceManager
+from .card_renderer import CardRenderer
+from .animation_manager import AnimationManager
 
-from settings import globals
+from .settings import globals
 
 # Constants for Layout
 SCREEN_WIDTH = globals.VIRTUAL_WIDTH
 SCREEN_HEIGHT = globals.VIRTUAL_HEIGHT
 
-# Colors
-COLOR_BG = (25, 25, 25)
 # Colors
 COLOR_BG = (25, 25, 25)
 COLOR_TEXT = (255, 255, 255)
@@ -75,8 +73,6 @@ class GameView(Observer):
 		btn_w, btn_h = 100, 40
 		btn_x = (globals.VIRTUAL_WIDTH - btn_w) // 2
 		btn_y = 900 # Bottom area
-		self.restart_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-
 		self.restart_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
 
 		# Animation Manager
