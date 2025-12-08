@@ -99,10 +99,48 @@ class GameView(Observer):
         # React to model changes
         self.draw()
 
+    def draw_background_sliced(self, bg):
+        # Slice logic to prevent stretching headers/middle excessively
+        # Assuming header is top ~100px, footer is bottom ~100px
+        img_w, img_h = bg.get_size()
+        
+        top_slice_h = 120
+        bottom_slice_h = 120
+        
+        # Source Rects
+        src_top = pygame.Rect(0, 0, img_w, top_slice_h)
+        src_bottom = pygame.Rect(0, img_h - bottom_slice_h, img_w, bottom_slice_h)
+        src_mid = pygame.Rect(0, top_slice_h, img_w, img_h - top_slice_h - bottom_slice_h)
+        
+        # Dest Rects (Virtual Screen)
+        dest_top = pygame.Rect(0, 0, globals.VIRTUAL_WIDTH, top_slice_h)
+        dest_bottom = pygame.Rect(0, globals.VIRTUAL_HEIGHT - bottom_slice_h, globals.VIRTUAL_WIDTH, bottom_slice_h)
+        # Middle fills the rest
+        dest_mid = pygame.Rect(0, top_slice_h, globals.VIRTUAL_WIDTH, globals.VIRTUAL_HEIGHT - top_slice_h - bottom_slice_h)
+        
+        # Draw Slices (Scale width, keep height for top/bottom, scale mid)
+        # Note: transform.scale expects (width, height)
+        
+        # Top
+        top_surf = bg.subsurface(src_top)
+        self.screen.blit(pygame.transform.scale(top_surf, (dest_top.width, dest_top.height)), dest_top)
+        
+        # Bottom
+        bottom_surf = bg.subsurface(src_bottom)
+        self.screen.blit(pygame.transform.scale(bottom_surf, (dest_bottom.width, dest_bottom.height)), dest_bottom)
+        
+        # Mid
+        mid_surf = bg.subsurface(src_mid)
+        self.screen.blit(pygame.transform.scale(mid_surf, (dest_mid.width, dest_mid.height)), dest_mid)
+
     def draw(self):
-        # Background - Simplified as requested
-        # Using a nice dark slate colors scheme for premium feel
-        self.screen.fill((30, 35, 45)) 
+        # Background - Metin2 Border Sliced
+        bg = self.rm.load_image("ui/border_metin2.png") # Load original without pre-scaling
+        if bg:
+            self.draw_background_sliced(bg)
+        else:
+             # Fallback if image missing
+             self.screen.fill((30, 35, 45)) 
 
         # Draw Slots (Visual placeholders)
         for rect in self.hand_rects:
@@ -126,10 +164,42 @@ class GameView(Observer):
         elif count == 0:
             pygame.draw.rect(self.screen, (30,30,30), self.deck_rect, 2)
 
-        # Draw Count
+        # Bottom UI Bar Layout
+        # Requirement: Align X, Count, Score, ScoreBox with BOTTOM of Deck
+        # Deck Bottom is self.deck_rect.bottom
+        
+        base_y = self.deck_rect.bottom
+        
         font = self.rm.load_font(20)
-        text = font.render(f"x {count}", True, COLOR_TEXT)
-        self.screen.blit(text, (self.deck_rect.right + 15, self.deck_rect.centery))
+        
+        # 1. "X" Label
+        # Position: Right of Deck
+        x_label_surf = font.render("X", True, COLOR_TEXT)
+        x_label_rect = x_label_surf.get_rect(bottom=base_y - 5, left=self.deck_rect.right + 15)
+        self.screen.blit(x_label_surf, x_label_rect)
+        
+        # 2. Count Container (Box for Number)
+        # Position: Right of X Label
+        count_val = f"{count}" # Just number
+        count_box_w = 50
+        count_box_h = 30
+        count_box_rect = pygame.Rect(x_label_rect.right + 10, base_y - count_box_h, count_box_w, count_box_h)
+        self.draw_ui_container(count_box_rect, count_val, label_color=COLOR_TEXT)
+        
+        # 3. "Score" Label
+        # Position: Right of Count Box
+        score_label_surf = font.render("Score", True, COLOR_TEXT)
+        score_label_rect = score_label_surf.get_rect(bottom=base_y - 5, left=count_box_rect.right + 20)
+        self.screen.blit(score_label_surf, score_label_rect)
+        
+        # 4. Score Container (Box for Score Number)
+        # Position: Right of Score Label
+        score_val = f"{self.model.score}"
+        score_box_w = 80
+        score_box_h = 30
+        score_box_rect = pygame.Rect(score_label_rect.right + 10, base_y - score_box_h, score_box_w, score_box_h)
+        self.draw_ui_container(score_box_rect, score_val, label_color=COLOR_TEXT)
+        
         
         # Draw Cards in Hand
         for i, card in enumerate(self.model.hand):
@@ -140,11 +210,19 @@ class GameView(Observer):
         for i, card in enumerate(self.model.combination):
             if card:
                 self.draw_card(card, self.combo_rects[i])
-
-        # Draw Score
-        font_score = self.rm.load_font(40)
-        score_text = font_score.render(f"Score: {self.model.score}", True, COLOR_GOLD)
-        self.screen.blit(score_text, (SCREEN_WIDTH - 250, 750))
+        
+        # Combo Points Indicator
+        # Small Container next to the 3 combo cards
+        # Position: Right of the last combo rect
+        last_combo_rect = self.combo_rects[-1]
+        combo_pts = self.model.current_combo_points
+        
+        pts_box_w = 60
+        pts_box_h = 40
+        pts_box_rect = pygame.Rect(last_combo_rect.right + 20, last_combo_rect.centery - pts_box_h//2, pts_box_w, pts_box_h)
+        
+        # Show points if > 0, otherwise maybe just "0" or empty? User said "ADD THE NUMBER OF POINTS"
+        self.draw_ui_container(pts_box_rect, str(combo_pts), label_color=COLOR_TEXT)
         
         # Draw Message
         if self.model.message:
@@ -220,6 +298,17 @@ class GameView(Observer):
         # Simple Pattern (Diamond in center)
         cx, cy = rect.centerx, rect.centery
         pygame.draw.circle(self.screen, (60, 140, 80), (cx, cy), 15)
+
+    def draw_ui_container(self, rect, text, label_color=(255, 255, 255)):
+        s = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        s.fill((0, 0, 0, 200)) # Semi-transparent black
+        self.screen.blit(s, rect.topleft)
+        pygame.draw.rect(self.screen, (100, 100, 100), rect, 1) # Grey Border
+        
+        font = self.rm.load_font(20)
+        text_surf = font.render(text, True, label_color)
+        text_rect = text_surf.get_rect(center=rect.center)
+        self.screen.blit(text_surf, text_rect)
 
 
     def handle_click(self, pos, button):
