@@ -164,12 +164,18 @@ class GameView(Observer):
         pygame.display.flip()
 
     def draw_slot(self, rect, type_name):
-        # Draw a semi-transparent dark box for slot
-        s = pygame.Surface((rect.width, rect.height))
-        s.set_alpha(50) # Lighter alpha for cleaner look
-        s.fill((0,0,0))
-        self.screen.blit(s, rect.topleft)
-        pygame.draw.rect(self.screen, (60, 60, 70), rect, 2)
+        # Try to load placeholder image
+        placeholder_img = self.rm.load_image("ui/placeholder_scaled.png", (rect.width, rect.height))
+        
+        if placeholder_img:
+            self.screen.blit(placeholder_img, rect)
+        else:
+            # Fallback if image not found
+            s = pygame.Surface((rect.width, rect.height))
+            s.set_alpha(50) 
+            s.fill((0,0,0))
+            self.screen.blit(s, rect.topleft)
+            pygame.draw.rect(self.screen, (60, 60, 70), rect, 2)
 
     def draw_card(self, card, rect):
         # Try to load specific card asset

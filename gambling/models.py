@@ -55,7 +55,7 @@ class GameModel(Subject):
         self.combination = [None] * 3
         self.score = 0
         self.game_over = False
-        self.fill_hand_initial()
+        # self.fill_hand_initial() # Removed initial draw
         self.notify()
 
     def fill_hand_initial(self):
@@ -67,7 +67,13 @@ class GameModel(Subject):
                     self.hand[i] = card
 
     def draw_card_action(self):
-        # Find first empty slot
+        # User Request: If hand is empty (initial state), draw 5 cards
+        if all(card is None for card in self.hand):
+             self.fill_hand_initial()
+             self.notify()
+             return
+
+        # Normal Behavior: Draw 1 card into first empty slot
         slot_index = -1
         for i in range(5):
             if self.hand[i] is None:
