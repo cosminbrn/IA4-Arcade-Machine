@@ -66,8 +66,8 @@ class GameView(Observer):
         self.model.attach(self)
         
         # UI Metrics
-        self.card_width = 100
-        self.card_height = 140
+        self.card_width = 114
+        self.card_height = 148
         self.hand_y = 100    # Top of screen
         self.combo_y = 400   # Middle
         self.deck_y = 700    # Bottom Left
@@ -75,14 +75,23 @@ class GameView(Observer):
         
         # Pre-calculate Rects for click detection
         self.hand_rects = []
-        start_x = (SCREEN_WIDTH - (5 * 110)) // 2
+        # Calculate stride with 10px spacing
+        stride_x = self.card_width + 10 
+        
+        # Calculate start_x to center 5 cards
+        total_hand_width = (5 * stride_x) - 10 # Last gap not needed for width
+        start_x = (SCREEN_WIDTH - total_hand_width) // 2
+        
         for i in range(5):
-            self.hand_rects.append(pygame.Rect(start_x + i * 110, self.hand_y, self.card_width, self.card_height))
+            self.hand_rects.append(pygame.Rect(start_x + i * stride_x, self.hand_y, self.card_width, self.card_height))
             
         self.combo_rects = []
-        start_x_combo = (SCREEN_WIDTH - (3 * 110)) // 2
+        # Center 3 cards
+        total_combo_width = (3 * stride_x) - 10
+        start_x_combo = (SCREEN_WIDTH - total_combo_width) // 2
+        
         for i in range(3):
-            self.combo_rects.append(pygame.Rect(start_x_combo + i * 110, self.combo_y, self.card_width, self.card_height))
+            self.combo_rects.append(pygame.Rect(start_x_combo + i * stride_x, self.combo_y, self.card_width, self.card_height))
             
         self.deck_rect = pygame.Rect(self.deck_x, self.deck_y, self.card_width, self.card_height)
 
@@ -103,34 +112,24 @@ class GameView(Observer):
              self.draw_slot(rect, "Combo")
              
         # Draw Deck with Stack Effect
-        if not self.model.deck.is_empty():
-            count = len(self.model.deck.cards)
-            # Visualize up to 5 cards for the stack effect
-            visual_count = min(count, 5)
-            
-            # Draw from bottom to top
-            for i in range(visual_count):
-                # Calculate offset: bottom cards are shifted slightly
-                # We want the top card (last drawn) to be at self.deck_rect
-                # Cards below slightly down/right or up/left. 
-                # Let's shift "lower" cards down and right slightly so top is top-left-most? 
-                # Or usually top is "highest". Let's shift lower cards by (offset, offset)
-                
-                # Reverse index for offset: 0 is top, 4 is bottom
-                # We are drawing loop 0..4. 
-                # Let's say we draw bottom first.
-                
-                layer_idx = visual_count - 1 - i # 4, 3, 2, 1, 0
-                offset = layer_idx * 2
-                
-                draw_rect = self.deck_rect.move(offset, offset)
-                self.draw_card_back(draw_rect)
+        count = len(self.model.deck.cards)
+        
+        # Visualize using static image
+        deck_img = self.rm.load_image("ui/deck_scaled.png")
+        
+        if deck_img:
+            img_rect = deck_img.get_rect(center=self.deck_rect.center)
+            self.screen.blit(deck_img, img_rect)
+        elif not self.model.deck.is_empty(): 
+             # Fallback: Draw one card back if image fails and deck not empty for safety
+             self.draw_card_back(self.deck_rect)
+        elif count == 0:
+            pygame.draw.rect(self.screen, (30,30,30), self.deck_rect, 2)
 
-            # Draw Count
-            font = self.rm.load_font(20)
-            text = font.render(f"x {count}", True, COLOR_TEXT)
-            # Position text relative to the main deck rect
-            self.screen.blit(text, (self.deck_rect.right + 15, self.deck_rect.centery))
+        # Draw Count
+        font = self.rm.load_font(20)
+        text = font.render(f"x {count}", True, COLOR_TEXT)
+        self.screen.blit(text, (self.deck_rect.right + 15, self.deck_rect.centery))
         
         # Draw Cards in Hand
         for i, card in enumerate(self.model.hand):
@@ -179,8 +178,8 @@ class GameView(Observer):
 
     def draw_card(self, card, rect):
         # Try to load specific card asset
-        # Expected naming: "cards/red_1.png", "cards/blue_5.png"
-        image_key = f"cards/{card.color}_{card.number}.png"
+        # Expected naming: "cards/1_red.png", "cards/5_blue.png"
+        image_key = f"cards/{card.number}_{card.color}.png"
         card_img = self.rm.load_image(image_key, (rect.width, rect.height))
         
         if card_img:

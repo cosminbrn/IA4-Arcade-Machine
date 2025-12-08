@@ -55,7 +55,6 @@ class GameModel(Subject):
         self.combination = [None] * 3
         self.score = 0
         self.game_over = False
-        # self.fill_hand_initial() # Removed initial draw
         self.notify()
 
     def fill_hand_initial(self):
@@ -107,8 +106,10 @@ class GameModel(Subject):
             if combo_index != -1:
                 self.combination[combo_index] = self.hand[hand_index]
                 self.hand[hand_index] = None
-                self.check_combination_match() 
+                
                 self.notify()
+                
+                self.check_combination_match() 
 
     def return_combo_to_hand(self, combo_index):
         """Left click combo -> hand"""
@@ -134,6 +135,10 @@ class GameModel(Subject):
         points = self.calculate_points(c1, c2, c3)
         
         if points > 0:
+            # Valid Match!
+            import time
+            time.sleep(0.6)
+            
             self.score += points
             self.message = f"Success! +{points}"
             # Consume cards
@@ -141,7 +146,6 @@ class GameModel(Subject):
             self.notify()
         else:
             self.message = "Invalid Combination"
-            # Do NOT consume, let user return them
             self.notify()
 
     def calculate_points(self, c1, c2, c3):
