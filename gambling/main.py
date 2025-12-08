@@ -5,40 +5,34 @@ from view import GameView
 from settings import globals
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((globals.WINWIDTH, globals.WINHEIGHT))
-    pygame.display.set_caption("Metin2 Okey Card Game")
-    clock = pygame.time.Clock()
+	pygame.init()
+	screen = pygame.display.set_mode((globals.WINWIDTH, globals.WINHEIGHT))
+	pygame.display.set_caption("Metin2 Okey Card Game")
+	clock = pygame.time.Clock()
 
-    # Initialize MVC
-    model = GameModel()
-    view = GameView(model, screen)
-    
-    # Start game logic
-    model.start_game()
+	model = GameModel()
+	view = GameView(model, screen)
+	
+	model.start_game()
 
-    running = True
-    while running:
-        # 1. Event Handling (Controller logic)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Delegate click to view to determine Command
-                command = view.handle_click(event.pos, event.button)
-                if command:
-                    command.execute()
-        
-        # 2. Update
-        
-        # 3. Draw 
-        view.draw()
-        
-        clock.tick(60)
+	running = True
+	while running:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				running = False
+			
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				# Delegate click to view to determine Command
+				command = view.handle_click(event.pos, event.button)
+				if command:
+					command.execute()
+		
+		view.draw()
+		
+		clock.tick(60)
 
-    pygame.quit()
-    sys.exit()
+	pygame.quit()
+	sys.exit()
 
 if __name__ == "__main__":
-    main()
+	main()
