@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 # Implementation of observers using Observer Pattern
+
 class Observer(ABC):
 	@abstractmethod
 	def update(self, subject):

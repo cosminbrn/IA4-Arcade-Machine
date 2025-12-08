@@ -1,6 +1,8 @@
 import pygame
 import os
 
+# Module that implements assets and font loading
+
 class ResourceManager:
 	def __init__(self, assets_dir="assets"):
 		self.assets_dir = assets_dir

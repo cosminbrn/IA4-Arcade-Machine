@@ -7,6 +7,8 @@ COLOR_RED = (200, 50, 50)
 COLOR_BLUE = (50, 100, 200)
 COLOR_YELLOW = (200, 200, 50)
 
+# Card Rendering class
+
 class CardRenderer:
 	def __init__(self, screen, resource_manager):
 		self.screen = screen
@@ -14,7 +16,7 @@ class CardRenderer:
 
 	def draw_slot(self, rect, type_name):
 		# Try to load placeholder image
-		placeholder_img = self.rm.load_image("ui/placeholder_scaled.png", (rect.width, rect.height))
+		placeholder_img = self.rm.load_image("ui/placeholder.png", (rect.width, rect.height))
 
 		if placeholder_img:
 			self.screen.blit(placeholder_img, rect)
@@ -28,7 +30,6 @@ class CardRenderer:
 
 	def draw_card(self, card, rect):
 		# Try to load specific card asset
-		# Expected naming: "cards/1_red.png", "cards/5_blue.png"
 		image_key = f"cards/{card.number}_{card.color}.png"
 		card_img = self.rm.load_image(image_key, (rect.width, rect.height))
 
@@ -36,11 +37,11 @@ class CardRenderer:
 			self.screen.blit(card_img, rect)
 			return
 
-		# Fallback: Code Rendering
+		# Fallback coloring
 		pygame.draw.rect(self.screen, (240, 240, 240), rect)
 		pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
 
-		# Color Stripe / Fill
+		# Color fill
 		c = (100, 100, 100)
 		if card.color == 'red': c = COLOR_RED
 		elif card.color == 'blue': c = COLOR_BLUE
@@ -52,7 +53,6 @@ class CardRenderer:
 		# Number
 		font = self.rm.load_font(60)
 		text = font.render(str(card.number), True, (255, 255, 255))
-		# Add simpler shadow/outline for contrast
 		text_shadow = font.render(str(card.number), True, (0,0,0))
 
 		text_rect = text.get_rect(center=rect.center)
@@ -62,11 +62,8 @@ class CardRenderer:
 		self.screen.blit(text, text_rect)
 
 	def draw_card_back(self, rect):
-		# Draw decorative back
-		# Rounded corners for better look
 		pygame.draw.rect(self.screen, (40, 120, 60), rect, border_radius=4)
 		pygame.draw.rect(self.screen, (220, 220, 220), rect, 2, border_radius=4) 
 
-		# Simple Patterns
 		cx, cy = rect.centerx, rect.centery
 		pygame.draw.circle(self.screen, (60, 140, 80), (cx, cy), 15)

@@ -19,7 +19,7 @@ COLOR_BG = (25, 25, 25)
 COLOR_TEXT = (255, 255, 255)
 COLOR_GOLD = (255, 215, 0)
 
-
+# Module that handles the construction of the GUI
 
 class GameView(Observer):
 	def __init__(self, model, screen):
@@ -34,14 +34,14 @@ class GameView(Observer):
 		self.offset_x = (run_w - virt_w * self.scale) // 2
 		self.offset_y = (run_h - virt_h * self.scale) // 2 
 
-		# Virtual Surface for drawing
+		# Virtual surface for drawing
 		self.screen = pygame.Surface((virt_w, virt_h))
 
 		self.rm = ResourceManager()
 		self.renderer = CardRenderer(self.screen, self.rm)
 		self.model.attach(self)
 
-		# UI Metrics
+		# UI constants
 		self.card_width = 114
 		self.card_height = 148
 		self.hand_y = 100    # Top of screen
@@ -123,7 +123,7 @@ class GameView(Observer):
 
 	def draw(self):
 		# Background - Metin2 Border
-		bg = self.rm.load_image("ui/border_metin2.png")
+		bg = self.rm.load_image("ui/background.png")
 		if bg:
 			self.draw_background_sliced(bg)
 		else:
@@ -141,7 +141,7 @@ class GameView(Observer):
 		count = len(self.model.deck.cards)
 
 		# Visualize using static image
-		deck_img = self.rm.load_image("ui/deck_scaled.png")
+		deck_img = self.rm.load_image("ui/deck.png")
 
 		if deck_img:
 			img_rect = deck_img.get_rect(center=self.deck_rect.center)
@@ -210,15 +210,20 @@ class GameView(Observer):
 		pts_box_h = 40
 		pts_box_rect = pygame.Rect(last_combo_rect.right + 20, last_combo_rect.centery - pts_box_h//2, pts_box_w, pts_box_h)
 
+		# High Score Effect (> 70)
+		if combo_pts > 70:
+			# Simple glow: Draw expanding/contracting border or bright color
+			import time
+			glow_val = (int(time.time() * 10) % 2) * 50 # 0 or 50
+			color_glow = (255, 215 + glow_val/2, glow_val) # Gold to brighter
+			pygame.draw.rect(self.screen, color_glow, pts_box_rect.inflate(6, 6), 3, border_radius=5)
 		
-		self.draw_ui_container(pts_box_rect, str(combo_pts), label_color=COLOR_TEXT)
+		# Show points using "+ X" format
+		pts_str = f"+ {combo_pts}" if combo_pts > 0 else "0"
+		# Use smaller font if needed (logic inside draw_ui_container uses size 20, fits well)
+		self.draw_ui_container(pts_box_rect, pts_str, label_color=COLOR_TEXT)
 
-		# Draw Message
-		if self.model.message:
-			font_msg = self.rm.load_font(30)
-			msg_text = font_msg.render(self.model.message, True, COLOR_TEXT)
-			rect = msg_text.get_rect(center=(SCREEN_WIDTH//2, 600))
-			self.screen.blit(msg_text, rect)
+
 
 		# Draw Animations
 		animations = self.anim_manager.update_animations()

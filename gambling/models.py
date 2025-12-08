@@ -3,6 +3,8 @@ import time
 from collections import deque
 from observers import Subject
 
+# Module that handles internal logic
+
 class Card:
 	def __init__(self, number, color):
 		self.number = number # 1-8

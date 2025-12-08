@@ -1,5 +1,7 @@
 import pygame
 
+# This module implements the Animation classes
+
 class Animation:
 	def __init__(self, card, start_rect, end_rect, duration=30):
 		self.card = card
@@ -38,14 +40,14 @@ class AnimationManager:
 		self.last_combo = [None] * 3
 
 	def update_state(self, model):
-		# 1. Check Hand changes (Draw OR Return from Combo)
+		# Check hand changes (draw or return from combo)
 		for i in range(5):
 			if model.hand[i] is not None and self.last_hand[i] is None:
 				# Card appeared in hand[i]
 				card = model.hand[i]
-				start_rect = self.deck_rect # Default to Draw
+				start_rect = self.deck_rect
 				
-				# Check if it came from Combo
+				# Check if it came from combo
 				found_in_combo = False
 				for c_idx, c_card in enumerate(self.last_combo):
 					if c_card and c_card.number == card.number and c_card.color == card.color:
@@ -57,14 +59,15 @@ class AnimationManager:
 				anim = Animation(card, start_rect, self.hand_rects[i])
 				self.animations.append(anim)
 				
-		# 2. Check Combo changes (Move from Hand)
+		# Check combo changes
 		for i in range(3):
 			if model.combination[i] is not None and self.last_combo[i] is None:
 				# Card appeared in combo[i]
 				card = model.combination[i]
-				start_rect = self.deck_rect # Fallback
+				# Fallback
+				start_rect = self.deck_rect 
 				
-				# Check if it came from Hand
+				# Check if it came from hand
 				found_in_hand = False
 				for h_idx, h_card in enumerate(self.last_hand):
 					if h_card and h_card.number == card.number and h_card.color == card.color:
@@ -76,11 +79,29 @@ class AnimationManager:
 					anim = Animation(card, start_rect, self.combo_rects[i])
 					self.animations.append(anim)
 					
-		# Update State
-		self.last_hand = [c for c in model.hand] # Shallow copy
+		# Check restart 
+		# If current hand/combo is empty but last wasnt it means reset
+		is_reset = all(c is None for c in model.hand) and all(c is None for c in model.combination)
+		was_active = any(c is not None for c in self.last_hand) or any(c is not None for c in self.last_combo)
+		
+		if is_reset and was_active:
+			# Animate everything back to deck
+
+			# From hand
+			for i, card in enumerate(self.last_hand):
+				if card:
+					anim = Animation(card, self.hand_rects[i], self.deck_rect)
+					self.animations.append(anim)
+			# From combo
+			for i, card in enumerate(self.last_combo):
+				if card:
+					anim = Animation(card, self.combo_rects[i], self.deck_rect)
+					self.animations.append(anim)
+					
+		# Update state  
+		self.last_hand = [c for c in model.hand]
 		self.last_combo = [c for c in model.combination]
 
 	def update_animations(self):
-		# Remove finished
 		self.animations = [a for a in self.animations if not a.finished]
 		return self.animations
