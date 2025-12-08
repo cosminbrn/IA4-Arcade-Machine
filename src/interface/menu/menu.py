@@ -1,4 +1,6 @@
 import pygame
+import os
+import json
 
 class Menu:
     name = "Menu"
@@ -13,6 +15,24 @@ class Menu:
         self.glb = new_globals
         # self.background = pygame.image.load("././assets/menu/images/bg.png")
         # self.background = pygame.transform.scale(self.background, (self.glb.WINWIDTH, self.glb.WINHEIGHT))
+        
+        self.font_path = "././assets/fonts/Pixellettersfull-BnJ5.ttf"
+        try:
+            self.font = pygame.font.Font(self.font_path, 48)
+        except:
+            self.font = pygame.font.SysFont("Arial", 36)
+
+    def get_invaders_scores(self):
+        base_dir = os.path.dirname(__file__)
+        path = os.path.join(base_dir, "..", "invaders", "leaderboard.json")
+        
+        if not os.path.exists(path):
+            return []
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except:
+            return []
 
     def controls(self):
         keys = pygame.key.get_pressed()
@@ -88,6 +108,28 @@ class Menu:
         for i in range(0, 3):
             color = selected_color if self.selected_item == i else unselected_color
             pygame.draw.rect(self.screen, color, pygame.Rect(game_positions[i][0], game_positions[i][1], grid_item_width, grid_item_height))
+
+        # --- Draw Invaders High Scores ---
+        scores = self.get_invaders_scores()
+        invaders_x = game_positions[0][0]
+        invaders_y = game_positions[0][1]
+        center_x = invaders_x + grid_item_width // 2
+        start_y = invaders_y + grid_item_height + 10
+
+        if scores:
+            title = self.font.render("High Scores:", True, (255, 215, 0))
+            title_rect = title.get_rect(center=(center_x, start_y + 20))
+            self.screen.blit(title, title_rect)
+            
+            for idx, entry in enumerate(scores[:3]):
+                score_text = f"{entry['name']} {entry['score']}"
+                s_surf = self.font.render(score_text, True, (255, 255, 255))
+                s_rect = s_surf.get_rect(center=(center_x, start_y + 60 + idx * 35))
+                self.screen.blit(s_surf, s_rect)
+        else:
+            title = self.font.render("No High Scores", True, (150, 150, 150))
+            title_rect = title.get_rect(center=(center_x, start_y + 30))
+            self.screen.blit(title, title_rect)
 
         pygame.display.update()
         self.controls()
