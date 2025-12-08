@@ -56,7 +56,7 @@ The *resource_manager.py* module handles the loading and management of game asse
 
 # Brick Invaders
 
-Brick Invaders is a retro-inspired arcade shooter game, part of the LEGO Arcade Machine project.  
+Brick Invaders is a retro-inspired arcade shooter game, part of the Arcade Machine project.  
 This folder contains all the code and assets for the Brick Invaders game.
 
 ## Folder Structure
