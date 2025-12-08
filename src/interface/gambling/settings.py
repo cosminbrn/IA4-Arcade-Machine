@@ -6,7 +6,7 @@ class globals:
 	DEBUG_MODE = False
 	
 	# Internal resolution the game is designed for
-	VIRTUAL_WIDTH = 720
-	VIRTUAL_HEIGHT = 960
+	VIRTUAL_WIDTH = 1920
+	VIRTUAL_HEIGHT = 1080
 
 	return_to_menu = False

@@ -4,7 +4,7 @@ import os
 # Module that implements assets and font loading
 
 class ResourceManager:
-	def __init__(self, assets_dir="assets"):
+	def __init__(self, assets_dir="../../assets/gambling/"):
 		base_path = os.path.dirname(os.path.abspath(__file__))
 		self.assets_dir = os.path.join(base_path, assets_dir)
 		self.images = {}

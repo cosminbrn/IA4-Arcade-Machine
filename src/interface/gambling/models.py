@@ -101,9 +101,9 @@ class GameModel(Subject):
 
 	def draw_card_action(self):
 		if all(card is None for card in self.hand):
-			 self.fill_hand_initial()
-			 self.notify()
-			 return
+			self.fill_hand_initial()
+			self.notify()
+			return
 
 		# Draw 1 card into first empty slot
 		slot_index = -1
