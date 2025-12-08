@@ -9,6 +9,7 @@ from constants import *
 from hand import HandGame
 from flake import Flake
 from scoreboard import ScoreBoard
+from utilities import handle_leaderboard, draw_leaderboard
 
 class DontTouchMyPresents:
 	def __init__(self, screen, globals_obj):
@@ -74,9 +75,13 @@ class DontTouchMyPresents:
 		self.game_start_time = 0
 		self.hand_delay = 1500
 		self.final_score = 0
+		
+		self.leaderboard_calculated = False
+		self.leaderboard = []
 
 	def reset_game_session(self):
 		self.gamestate = "game"
+		self.leaderboard_calculated = False
 		self.game_start_time = pygame.time.get_ticks()
 		self.scoreboard.score = 0
 		self.present_rect.topleft = self.initial_present_pos
@@ -85,6 +90,12 @@ class DontTouchMyPresents:
 			if i == 1: hand.y -= self.h * HAND_OFFSET_Y_RATIO
 
 	def handle_event(self, event):
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_ESCAPE:
+				self.running = False
+				self.glb.return_to_menu = True
+				return
+
 		if self.gamestate == "menu":
 			if event.type == pygame.MOUSEBUTTONDOWN:
 				mx, my = event.pos
@@ -160,11 +171,19 @@ class DontTouchMyPresents:
 			self.scoreboard.draw(self.game_surface)
 
 		elif self.gamestate == "gameover":
+			if not self.leaderboard_calculated:
+				# Use main_screen for input to cover everything
+				self.leaderboard = handle_leaderboard(self.main_screen, self.final_score)
+				self.leaderboard_calculated = True
+
 			go_text = self.font_large.render("Game Over!", True, BLACK)
 			self.game_surface.blit(go_text, go_text.get_rect(center=(self.w/2, self.h*0.2)))
 			
 			sc_text = self.font_large.render(f"Final Score: {self.final_score}", True, BLACK)
-			self.game_surface.blit(sc_text, sc_text.get_rect(center=(self.w/2, self.h*0.35)))
+			self.game_surface.blit(sc_text, sc_text.get_rect(center=(self.w/2, self.h*0.3)))
+
+			# Draw Leaderboard
+			draw_leaderboard(self.game_surface, self.leaderboard, self.h * 0.4)
 
 			pygame.draw.rect(self.game_surface, WHITE, self.restart_btn, border_radius=12)
 			pygame.draw.rect(self.game_surface, BLACK, self.restart_btn, 4, border_radius=12)

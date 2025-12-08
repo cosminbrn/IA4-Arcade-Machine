@@ -5,6 +5,7 @@ from .commands import *
 from .resource_manager import ResourceManager
 from .card_renderer import CardRenderer
 from .animation_manager import AnimationManager
+from .utilities import handle_leaderboard, draw_leaderboard
 
 from .settings import globals
 
@@ -77,51 +78,47 @@ class GameView(Observer):
 
 		# Animation Manager
 		self.anim_manager = AnimationManager(self.deck_rect, self.hand_rects, self.combo_rects)
+		
+		self.leaderboard_calculated = False
+		self.leaderboard = []
 
 	def update(self, subject):
 		# Delegate state tracking to manager
 		self.anim_manager.update_state(self.model)
 		self.draw()
 
-	def draw_background_sliced(self, bg):
-		# Slice logic to prevent stretching headers/middle excessively
-		# Assuming header is top ~100px, footer is bottom ~100px
+	def draw_background_fitted(self, bg):
+		self.screen.fill((0, 0, 0)) # Fill with black first
+		
 		img_w, img_h = bg.get_size()
-
-		top_slice_h = 120
-		bottom_slice_h = 120
-
-		# Source Rects
-		src_top = pygame.Rect(0, 0, img_w, top_slice_h)
-		src_bottom = pygame.Rect(0, img_h - bottom_slice_h, img_w, bottom_slice_h)
-		src_mid = pygame.Rect(0, top_slice_h, img_w, img_h - top_slice_h - bottom_slice_h)
-
-		# Dest Rects (Virtual Screen)
-		dest_top = pygame.Rect(0, 0, globals.VIRTUAL_WIDTH, top_slice_h)
-		dest_bottom = pygame.Rect(0, globals.VIRTUAL_HEIGHT - bottom_slice_h, globals.VIRTUAL_WIDTH, bottom_slice_h)
-		# Middle fills the rest
-		dest_mid = pygame.Rect(0, top_slice_h, globals.VIRTUAL_WIDTH, globals.VIRTUAL_HEIGHT - top_slice_h - bottom_slice_h)
-
-		# Draw Slices (Scale width, keep height for top/bottom, scale mid)
-		# Note: transform.scale expects (width, height)
-
-		# Top
-		top_surf = bg.subsurface(src_top)
-		self.screen.blit(pygame.transform.scale(top_surf, (dest_top.width, dest_top.height)), dest_top)
-
-		# Bottom
-		bottom_surf = bg.subsurface(src_bottom)
-		self.screen.blit(pygame.transform.scale(bottom_surf, (dest_bottom.width, dest_bottom.height)), dest_bottom)
-
-		# Mid
-		mid_surf = bg.subsurface(src_mid)
-		self.screen.blit(pygame.transform.scale(mid_surf, (dest_mid.width, dest_mid.height)), dest_mid)
+		virt_w, virt_h = globals.VIRTUAL_WIDTH, globals.VIRTUAL_HEIGHT
+		
+		scale = min(virt_w / img_w, virt_h / img_h)
+		new_w = int(img_w * scale)
+		new_h = int(img_h * scale)
+		
+		scaled_bg = pygame.transform.scale(bg, (new_w, new_h))
+		
+		x = (virt_w - new_w) // 2
+		y = (virt_h - new_h) // 2
+		
+		self.screen.blit(scaled_bg, (x, y))
 
 	def draw(self):
+		if self.model.game_over:
+			if not self.leaderboard_calculated:
+				self.leaderboard = handle_leaderboard(self.real_screen, self.model.score)
+				self.leaderboard_calculated = True
+			
+			self.draw_game_over_screen()
+			return
+		else:
+			self.leaderboard_calculated = False
+
 		# Background - Metin2 Border
 		bg = self.rm.load_image("ui/background.png")
 		if bg:
-			self.draw_background_sliced(bg)
+			self.draw_background_fitted(bg)
 		else:
 			 # Fallback if image missing
 			 self.screen.fill((30, 35, 45))
@@ -237,7 +234,28 @@ class GameView(Observer):
 		self.real_screen.blit(scaled_surface, (self.offset_x, self.offset_y))
 		pygame.display.flip()
 
-
+	def draw_game_over_screen(self):
+		# Draw semi-transparent overlay
+		s = pygame.Surface((globals.WINWIDTH, globals.WINHEIGHT), pygame.SRCALPHA)
+		s.fill((0, 0, 0, 200))
+		self.real_screen.blit(s, (0, 0))
+		
+		font = self.rm.load_font(72)
+		text = font.render("Game Over", True, (255, 0, 0))
+		text_rect = text.get_rect(center=(globals.WINWIDTH // 2, globals.WINHEIGHT // 2 - 150))
+		self.real_screen.blit(text, text_rect)
+		
+		score_text = self.rm.load_font(48).render(f"Final Score: {self.model.score}", True, (255, 255, 255))
+		score_rect = score_text.get_rect(center=(globals.WINWIDTH // 2, globals.WINHEIGHT // 2 - 70))
+		self.real_screen.blit(score_text, score_rect)
+		
+		draw_leaderboard(self.real_screen, self.leaderboard, globals.WINHEIGHT // 2 + 50)
+		
+		tip_text = self.rm.load_font(48).render("Press ESC to return to menu", True, (200, 200, 0))
+		tip_rect = tip_text.get_rect(center=(globals.WINWIDTH // 2, globals.WINHEIGHT - 50))
+		self.real_screen.blit(tip_text, tip_rect)
+		
+		pygame.display.flip()
 
 	def draw_ui_container(self, rect, text, label_color=(255, 255, 255)):
 		s = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)

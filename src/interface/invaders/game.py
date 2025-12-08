@@ -27,7 +27,7 @@ class Invaders:
         font_path = "././assets/fonts/Pixellettersfull-BnJ5.ttf"
         self.font = pygame.font.Font(font_path, 72)
         self.small_font = pygame.font.Font(font_path, 36)
-        loading_text = "Loading Brick Invaders"
+        loading_text = "Loading Invaders"
 
         anim_frames = 60
         tips = [

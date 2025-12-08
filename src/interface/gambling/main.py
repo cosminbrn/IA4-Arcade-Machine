@@ -3,6 +3,7 @@ import pygame
 from .models import GameModel
 from .view import GameView
 from .settings import globals as local_globals
+from .utilities import handle_leaderboard
 
 class Gambling:
     name = "Gambling"
@@ -20,6 +21,7 @@ class Gambling:
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                handle_leaderboard(self.screen, self.model.score)
                 self.running = False
                 self.glb.return_to_menu = True
         
