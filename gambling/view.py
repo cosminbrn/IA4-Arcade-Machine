@@ -4,6 +4,7 @@ from observers import Observer
 from commands import *
 from resource_manager import ResourceManager
 from card_renderer import CardRenderer
+from animation_manager import AnimationManager
 
 from settings import globals
 
@@ -18,6 +19,8 @@ COLOR_BG = (25, 25, 25)
 COLOR_TEXT = (255, 255, 255)
 COLOR_GOLD = (255, 215, 0)
 
+
+
 class GameView(Observer):
 	def __init__(self, model, screen):
 		self.model = model
@@ -31,7 +34,8 @@ class GameView(Observer):
 		self.offset_x = (run_w - virt_w * self.scale) // 2
 		self.offset_y = (run_h - virt_h * self.scale) // 2 
 
-		self.screen = pygame.Surface((virt_w, virt_h)) # Virtual Surface for drawing
+		# Virtual Surface for drawing
+		self.screen = pygame.Surface((virt_w, virt_h))
 
 		self.rm = ResourceManager()
 		self.renderer = CardRenderer(self.screen, self.rm)
@@ -51,7 +55,7 @@ class GameView(Observer):
 		stride_x = self.card_width + 10
 
 		# Calculate start_x to center 5 cards
-		total_hand_width = (5 * stride_x) - 10 # Last gap not needed for width
+		total_hand_width = (5 * stride_x) - 10
 		start_x = (SCREEN_WIDTH - total_hand_width) // 2
 
 		for i in range(5):
@@ -73,8 +77,14 @@ class GameView(Observer):
 		btn_y = 900 # Bottom area
 		self.restart_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
 
+		self.restart_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+
+		# Animation Manager
+		self.anim_manager = AnimationManager(self.deck_rect, self.hand_rects, self.combo_rects)
+
 	def update(self, subject):
-		# React to model changes
+		# Delegate state tracking to manager
+		self.anim_manager.update_state(self.model)
 		self.draw()
 
 	def draw_background_sliced(self, bg):
@@ -143,35 +153,27 @@ class GameView(Observer):
 			pygame.draw.rect(self.screen, (30,30,30), self.deck_rect, 2)
 
 		# Bottom UI Bar Layout
-		# Requirement: Align X, Count, Score, ScoreBox with BOTTOM of Deck
-		# Deck Bottom is self.deck_rect.bottom
-
 		base_y = self.deck_rect.bottom
 
 		font = self.rm.load_font(20)
 
-		# 1. "X" Label
-		# Position: Right of Deck
 		x_label_surf = font.render("X", True, COLOR_TEXT)
 		x_label_rect = x_label_surf.get_rect(bottom=base_y - 5, left=self.deck_rect.right + 15)
 		self.screen.blit(x_label_surf, x_label_rect)
 
-		# 2. Count Container (Box for Number)
-		# Position: Right of X Label
+		# Count container
 		count_val = f"{count}" # Just number
 		count_box_w = 50
 		count_box_h = 30
 		count_box_rect = pygame.Rect(x_label_rect.right + 10, base_y - count_box_h, count_box_w, count_box_h)
 		self.draw_ui_container(count_box_rect, count_val, label_color=COLOR_TEXT)
 
-		# 3. "Score" Label
-		# Position: Right of Count Box
+		# Score label
 		score_label_surf = font.render("Score", True, COLOR_TEXT)
 		score_label_rect = score_label_surf.get_rect(bottom=base_y - 5, left=count_box_rect.right + 20)
 		self.screen.blit(score_label_surf, score_label_rect)
 
-		# 4. Score Container (Box for Score Number)
-		# Position: Right of Score Label
+		# Score container
 		score_val = f"{self.model.score}"
 		score_box_w = 80
 		score_box_h = 30
@@ -179,13 +181,12 @@ class GameView(Observer):
 		self.draw_ui_container(score_box_rect, score_val, label_color=COLOR_TEXT)
 
 
-		# Draw Cards in Hand
+		# Draw cards in hand
 		for i, card in enumerate(self.model.hand):
 			if card:
 				self.renderer.draw_card(card, self.hand_rects[i])
 		
 		# Draw "Restart" Button
-		# Metin2 Style: Grey gradient-ish, rounded
 		btn_rect = self.restart_btn_rect
 		pygame.draw.rect(self.screen, (60, 60, 60), btn_rect, border_radius=5)   # Body
 		pygame.draw.rect(self.screen, (120, 120, 120), btn_rect, 2, border_radius=5) # Highlight
@@ -196,14 +197,12 @@ class GameView(Observer):
 		txt_rect = txt_surf.get_rect(center=btn_rect.center)
 		self.screen.blit(txt_surf, txt_rect)
 
-		# Draw Cards in Combo
+		# Draw cards in combo
 		for i, card in enumerate(self.model.combination):
 			if card:
 				self.renderer.draw_card(card, self.combo_rects[i])
 
 		# Combo Points Indicator
-		# Small Container next to the 3 combo cards
-		# Position: Right of the last combo rect
 		last_combo_rect = self.combo_rects[-1]
 		combo_pts = self.model.current_combo_points
 
@@ -211,7 +210,7 @@ class GameView(Observer):
 		pts_box_h = 40
 		pts_box_rect = pygame.Rect(last_combo_rect.right + 20, last_combo_rect.centery - pts_box_h//2, pts_box_w, pts_box_h)
 
-		# Show points if > 0, otherwise maybe just "0" or empty? User said "ADD THE NUMBER OF POINTS"
+		
 		self.draw_ui_container(pts_box_rect, str(combo_pts), label_color=COLOR_TEXT)
 
 		# Draw Message
@@ -221,12 +220,19 @@ class GameView(Observer):
 			rect = msg_text.get_rect(center=(SCREEN_WIDTH//2, 600))
 			self.screen.blit(msg_text, rect)
 
-		# Final Blit to Real Screen
+		# Draw Animations
+		animations = self.anim_manager.update_animations()
+		
+		for anim in animations:
+			rect = anim.update()
+			self.renderer.draw_card(anim.card, rect)
+
+		# Final blit to real screen
 		scaled_w = int(globals.VIRTUAL_WIDTH * self.scale)
 		scaled_h = int(globals.VIRTUAL_HEIGHT * self.scale)
 		scaled_surface = pygame.transform.scale(self.screen, (scaled_w, scaled_h))
 
-		self.real_screen.fill((0, 0, 0)) # Black bars
+		self.real_screen.fill((6, 4, 4, 200)) # Black bars
 		self.real_screen.blit(scaled_surface, (self.offset_x, self.offset_y))
 		pygame.display.flip()
 
