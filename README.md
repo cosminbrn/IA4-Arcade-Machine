@@ -1,4 +1,4 @@
-# IA4-Tetris-Project
+# Arcade Machine
 3 in 1 game macnine
 
 ## Prerequisites and tehnologies used
