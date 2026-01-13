@@ -201,7 +201,7 @@ Helper functions for Brick Invaders.
 ---
 
 
-# 🎁 Don't Touch My Presents
+# Don't Touch My Presents
 
 **Don't Touch My Presents** is a fast-paced, mouse-based arcade 
 mini-game included as part of the Arcade Machine project. 
@@ -212,7 +212,7 @@ to avoid contact.
 The game rewards quick reflexes and accuracy, with difficulty 
 increasing as the hands' speed accelerates.
 
-## 📁 Folder Structure
+## Folder Structure
 
 presents/
 │
@@ -224,7 +224,7 @@ presents/
 └── README.md             # This documentation
 
 
-## 💻 Main Modules and Classes
+## Main Modules and Classes
 
 ### `game.py` - Class `DontTouchMyPresents`
 
@@ -288,7 +288,7 @@ Defines essential configuration variables.
 
 ---
 
-## 🎮 How to Play
+## How to Play
 
 1.  **Main Menu:** The game starts on the menu screen with the snowing 
     background. Click **"Start Game"**.
